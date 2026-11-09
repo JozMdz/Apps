@@ -7,7 +7,8 @@
     <string name="process_text_label">Pronunciar</string>
 
     <string name="status_title">Estado del servicio</string>
-    <string name="status_on">Activado. Usa el botón flotante o el botón de accesibilidad para seleccionar texto.</string>
+    <string name="status_on">✅ Funcionando. Usa el botón flotante o el botón de accesibilidad para seleccionar texto.</string>
+    <string name="status_stopped">⚠️ Activado en Ajustes, pero el sistema detuvo el servicio y por eso el botón no responde. Desactívalo y vuelve a activarlo en Accesibilidad, activa «Mantener activo» (abajo) y el Inicio automático.</string>
     <string name="status_off">Desactivado. Actívalo en Accesibilidad → Servicios descargados (al final de la pestaña General).</string>
     <string name="open_accessibility_settings">Activar en Accesibilidad</string>
     <string name="find_service_hint">Baja hasta «Servicios descargados» y toca «Seleccionar para pronunciar»</string>
@@ -26,6 +27,14 @@
     <string name="floating_button_help">La app no necesita cerrarse: cuando no la uses, oculta el botón (mantenlo pulsado, o usa el icono «Botón lectura» del panel) y no hace nada ni gasta batería.
 
 Si activaste el botón de accesibilidad del sistema para esta app, el botón de la app no aparece (para no ver dos). Para poder ocultarlo y mostrarlo, quita el acceso directo en Accesibilidad → Seleccionar para pronunciar.</string>
+
+    <string name="keep_alive_channel">Servicio activo</string>
+    <string name="keep_alive_title">Seleccionar para pronunciar</string>
+    <string name="keep_alive_text">Activo. Toca el botón de accesibilidad para leer.</string>
+    <string name="keep_alive">Mantener activo (muestra un aviso fijo en la barra de notificaciones). Evita que el sistema detenga la app.</string>
+    <string name="feedback_title">Avisos</string>
+    <string name="feedback_vibrate">Vibrar al activar y al detener</string>
+    <string name="feedback_sound">Sonido corto al activar y al detener</string>
 
     <string name="error_toast">Ocurrió un error (%1$s). Se guardó en la app.</string>
     <string name="error_title">Último error</string>

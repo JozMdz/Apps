@@ -4,16 +4,22 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 
-/** Actividad invisible lanzada desde el icono de Ajustes rápidos. */
+/** Actividad invisible lanzada desde el icono de Ajustes rápidos o el aviso de la barra de notificaciones. */
 class TileActionActivity : Activity() {
+
+    companion object {
+        const val EXTRA_ACTION = "action"
+        const val ACTION_STOP = "stop"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val service = SelectToSpeakService.instance
-        if (service == null) {
-            // Servicio desactivado: abrimos la app para que el usuario lo active.
-            startActivity(Intent(this, MainActivity::class.java))
-        } else {
-            service.runTileAction()
+        val action = intent.getStringExtra(EXTRA_ACTION)
+        when {
+            action == ACTION_STOP -> Speaker.stop()
+            service == null -> startActivity(Intent(this, MainActivity::class.java))
+            else -> service.runTileAction(action)
         }
         finish()
     }

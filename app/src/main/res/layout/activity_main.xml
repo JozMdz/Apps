@@ -28,6 +28,15 @@
             android:layout_marginTop="8dp"
             android:text="@string/open_accessibility_settings" />
 
+        <Switch
+            android:id="@+id/keep_alive_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/keep_alive"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
         <TextView
             android:id="@+id/restricted_help"
             android:layout_width="match_parent"
@@ -229,6 +238,26 @@
             android:layout_marginTop="8dp"
             android:minHeight="48dp"
             android:text="@string/drag_rows"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <TextView
+            style="@style/SectionTitle"
+            android:text="@string/feedback_title" />
+
+        <Switch
+            android:id="@+id/feedback_vibrate_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/feedback_vibrate"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <Switch
+            android:id="@+id/feedback_sound_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/feedback_sound"
             android:textAppearance="@android:style/TextAppearance.Material.Body1" />
 
         <TextView

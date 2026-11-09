@@ -118,6 +118,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
         updateFloatingButton()
         onSpeakerChanged(Speaker.state, Speaker.currentSegment)
+        if (Prefs.keepAlive(this)) KeepAliveService.start(this)
 
         val filter = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
@@ -228,6 +229,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             receiverRegistered = false
         }
         contentResolver.unregisterContentObserver(shortcutObserver)
+        KeepAliveService.stop(this)
+        Feedback.release()
         buttonCallback?.let { accessibilityButtonController.unregisterAccessibilityButtonCallback(it) }
         buttonCallback = null
         Prefs.of(this).unregisterOnSharedPreferenceChangeListener(this)
@@ -254,6 +257,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             Prefs.KEY_HIGHLIGHT -> onSpeakerChanged(Speaker.state, Speaker.currentSegment)
             Prefs.KEY_RATE -> updateSpeedLabel()
             Prefs.KEY_CAR_AUTO, Prefs.KEY_CAR_DEVICES -> checkCarConnection()
+            Prefs.KEY_KEEP_ALIVE ->
+                if (Prefs.keepAlive(this)) KeepAliveService.start(this) else KeepAliveService.stop(this)
         }
     }
 
@@ -262,8 +267,14 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     /** Botón flotante / botón de accesibilidad. */
     fun toggle() = safely {
         when {
-            selectionOverlay != null -> hideSelection()
-            Speaker.state != Speaker.State.IDLE -> Speaker.stop()
+            selectionOverlay != null -> {
+                hideSelection()
+                Feedback.stopped(this)
+            }
+            Speaker.state != Speaker.State.IDLE -> {
+                Speaker.stop()
+                Feedback.stopped(this)
+            }
             else -> showSelection()
         }
     }
@@ -280,7 +291,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     }
 
     /** Icono de Ajustes rápidos: se espera a que el panel termine de cerrarse antes de actuar. */
-    fun runTileAction() {
+    fun runTileAction(requested: String? = null) {
         hideSelection()
         if (Speaker.state != Speaker.State.IDLE) {
             Speaker.stop()
@@ -290,7 +301,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         handler.postDelayed({
             if (instance !== this) return@postDelayed
             safely {
-                when (Prefs.tileAction(this)) {
+                when (requested ?: Prefs.tileAction(this)) {
                     Prefs.TILE_READ_ALL -> readAll()
                     else -> showSelection()
                 }
@@ -364,6 +375,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         ocrBusy = true
         ocrStartedAt = System.currentTimeMillis()
         Toast.makeText(this, R.string.ocr_working, Toast.LENGTH_SHORT).show()
+        Feedback.working(this)
         // Esperamos a que desaparezca la capa de selección antes de capturar.
         handler.postDelayed({
             if (instance !== this) return@postDelayed
@@ -616,6 +628,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         )
         windowManager.addView(root, params)
         selectionOverlay = root
+        Feedback.selecting(this)
     }
 
     private fun barButton(textRes: Int, onClick: () -> Unit) =

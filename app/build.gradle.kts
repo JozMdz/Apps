@@ -11,8 +11,8 @@ android {
         applicationId = "com.apps.seleccionarpronunciar"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
 
         // Solo arquitecturas ARM (teléfonos) para no inflar el APK con las librerías del OCR.
         ndk {

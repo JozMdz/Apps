@@ -21,6 +21,9 @@ object Prefs {
     const val MUSIC_PAUSE = "pause"
     const val MUSIC_NONE = "none"
     const val KEY_CAR_AUTO = "car_auto"
+    const val KEY_KEEP_ALIVE = "keep_alive"
+    const val KEY_FEEDBACK_VIBRATE = "feedback_vibrate"
+    const val KEY_FEEDBACK_SOUND = "feedback_sound"
     const val KEY_CAR_DEVICES = "car_devices"
     const val OCR_AUTO = "auto"
     const val OCR_ALWAYS = "always"
@@ -73,6 +76,17 @@ object Prefs {
     fun carDevices(context: Context): Set<String> = of(context).getStringSet(KEY_CAR_DEVICES, emptySet()) ?: emptySet()
     fun setCarDevices(context: Context, value: Set<String>) =
         of(context).edit().putStringSet(KEY_CAR_DEVICES, HashSet(value)).apply()
+
+    fun keepAlive(context: Context): Boolean = of(context).getBoolean(KEY_KEEP_ALIVE, true)
+    fun setKeepAlive(context: Context, value: Boolean) = of(context).edit().putBoolean(KEY_KEEP_ALIVE, value).apply()
+
+    fun feedbackVibrate(context: Context): Boolean = of(context).getBoolean(KEY_FEEDBACK_VIBRATE, true)
+    fun setFeedbackVibrate(context: Context, value: Boolean) =
+        of(context).edit().putBoolean(KEY_FEEDBACK_VIBRATE, value).apply()
+
+    fun feedbackSound(context: Context): Boolean = of(context).getBoolean(KEY_FEEDBACK_SOUND, true)
+    fun setFeedbackSound(context: Context, value: Boolean) =
+        of(context).edit().putBoolean(KEY_FEEDBACK_SOUND, value).apply()
 
     fun buttonPosition(context: Context, defX: Int, defY: Int): Pair<Int, Int> {
         val p = of(context)

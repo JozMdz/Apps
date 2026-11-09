@@ -32,6 +32,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQUEST_BLUETOOTH = 1
+        private const val REQUEST_NOTIFICATIONS = 2
     }
 
     private lateinit var statusText: TextView
@@ -63,6 +64,14 @@ class MainActivity : Activity() {
         floatingSwitch = findViewById(R.id.floating_switch)
 
         openSettings.setOnClickListener { openAccessibilitySettings() }
+
+        bindSwitch(R.id.keep_alive_switch, Prefs.keepAlive(this)) { checked ->
+            Prefs.setKeepAlive(this, checked)
+            if (checked) requestNotificationPermission()
+        }
+        bindSwitch(R.id.feedback_vibrate_switch, Prefs.feedbackVibrate(this)) { Prefs.setFeedbackVibrate(this, it) }
+        bindSwitch(R.id.feedback_sound_switch, Prefs.feedbackSound(this)) { Prefs.setFeedbackSound(this, it) }
+        if (Prefs.keepAlive(this)) requestNotificationPermission()
 
         findViewById<Button>(R.id.error_clear).setOnClickListener {
             CrashLog.clear(this)
@@ -195,8 +204,9 @@ class MainActivity : Activity() {
         super.onResume()
         updateErrorSection()
         val enabled = isServiceEnabled()
-        statusText.setText(if (enabled) R.string.status_on else R.string.status_off)
-        openSettings.visibility = if (enabled) View.GONE else View.VISIBLE
+        updateStatus()
+        // Al abrir la app el sistema puede volver a conectar el servicio: revisamos de nuevo en un momento.
+        statusText.postDelayed({ updateStatus() }, 1500)
         // Android 13+ bloquea los servicios de accesibilidad de apps instaladas fuera de la tienda.
         val showRestricted = !enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         restrictedHelp.visibility = if (showRestricted) View.VISIBLE else View.GONE
@@ -222,6 +232,33 @@ class MainActivity : Activity() {
         // Si el servicio no está activo, nadie más usa el motor de voz.
         if (isFinishing && SelectToSpeakService.instance == null) Speaker.shutdown()
         super.onDestroy()
+    }
+
+    private fun updateStatus() {
+        val running = SelectToSpeakService.instance != null
+        openSettings.visibility = if (running) View.GONE else View.VISIBLE
+        statusText.setText(
+            when {
+                running -> R.string.status_on
+                isServiceEnabled() -> R.string.status_stopped
+                else -> R.string.status_off
+            }
+        )
+    }
+
+    private fun bindSwitch(id: Int, initial: Boolean, onChange: (Boolean) -> Unit) {
+        findViewById<Switch>(id).apply {
+            isChecked = initial
+            setOnCheckedChangeListener { _, checked -> onChange(checked) }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+        }
     }
 
     private fun updateErrorSection() {
@@ -341,7 +378,6 @@ class MainActivity : Activity() {
     }
 
     private fun isServiceEnabled(): Boolean {
-        if (SelectToSpeakService.instance != null) return true
         val expected = ComponentName(this, SelectToSpeakService::class.java)
         val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
             ?: return false
