@@ -104,6 +104,8 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, checked -> Prefs.setDragRows(this@MainActivity, checked) }
         }
 
+        findViewById<Button>(R.id.system_button_fix).setOnClickListener { openAccessibilitySettings() }
+
         carAutoSwitch = findViewById(R.id.car_auto_switch)
         carPick = findViewById(R.id.car_pick)
         carAutoSwitch.setOnCheckedChangeListener { _, checked ->
@@ -184,6 +186,9 @@ class MainActivity : Activity() {
         highlightSwitch.isChecked = Prefs.highlight(this)
         floatingSwitch.isChecked = Prefs.floatingButton(this)
         carAutoSwitch.isChecked = Prefs.carAuto(this)
+        val systemButton = SystemShortcut.isAssigned(this)
+        findViewById<View>(R.id.system_button_warning).visibility = if (systemButton) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.system_button_fix).visibility = if (systemButton) View.VISIBLE else View.GONE
         updateCarPickLabel()
     }
 

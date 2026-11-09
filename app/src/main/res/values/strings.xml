@@ -28,6 +28,8 @@
 Si activaste el botón de accesibilidad del sistema para esta app, el botón de la app no aparece (para no ver dos). Para poder ocultarlo y mostrarlo, quita el acceso directo en Accesibilidad → Seleccionar para pronunciar.</string>
 
     <string name="driving_title">Modo manejo</string>
+    <string name="system_button_warning">⚠️ El botón de accesibilidad del sistema también está asignado a esta app, por eso ves dos iconos y el de la app se oculta. Para quedarte solo con el de la app (que se puede ocultar y se activa con el carro): Accesibilidad → Seleccionar para pronunciar → desactiva el «Acceso directo».</string>
+    <string name="system_button_fix">Quitar el botón del sistema</string>
     <string name="car_auto">Mostrar el botón solo cuando el teléfono esté conectado al Bluetooth del carro</string>
     <string name="car_pick">Elegir el Bluetooth del carro</string>
     <string name="car_pick_count">Bluetooth del carro (%1$d elegido/s)</string>

@@ -11,6 +11,8 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.database.ContentObserver
+import android.provider.Settings
 import android.annotation.TargetApi
 import android.graphics.Bitmap
 import android.view.Display
@@ -105,6 +107,9 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             }
         }
         systemButtonAvailable = accessibilityButtonController.isAccessibilityButtonAvailable
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(SystemShortcut.BUTTON_TARGETS_KEY), false, shortcutObserver,
+        )
         accessibilityButtonController.registerAccessibilityButtonCallback(callback)
         buttonCallback = callback
 
@@ -127,6 +132,12 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     // ---------------------------------------------------------------- modo manejo (Bluetooth del carro)
 
     private var receiverRegistered = false
+
+    private val shortcutObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            if (instance === this@SelectToSpeakService) updateFloatingButton()
+        }
+    }
 
     private val bluetoothReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -213,6 +224,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             unregisterReceiver(bluetoothReceiver)
             receiverRegistered = false
         }
+        contentResolver.unregisterContentObserver(shortcutObserver)
         buttonCallback?.let { accessibilityButtonController.unregisterAccessibilityButtonCallback(it) }
         buttonCallback = null
         Prefs.of(this).unregisterOnSharedPreferenceChangeListener(this)
@@ -273,14 +285,16 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     private fun readAt(x: Int, y: Int) {
         hideSelection()
         val mode = Prefs.ocrMode(this)
+        val ocrAllowed = mode != Prefs.OCR_NEVER && ocrSupported()
         if (mode != Prefs.OCR_ALWAYS) {
-            val fromTree = ScreenTextReader.textAt(this, x, y, dp(24), Prefs.tapMode(this))
-            if (fromTree.isNotEmpty() || mode == Prefs.OCR_NEVER) {
+            val fromTree = ScreenTextReader.textAt(this, x, y, dp(24), Prefs.tapMode(this), ocrAllowed)
+            if (fromTree != null && (fromTree.isNotEmpty() || !ocrAllowed)) {
                 speakOrWarn(fromTree)
                 return
             }
         }
-        // Sin texto accesible bajo el dedo (PDF, imagen…): reconocemos el texto de la captura.
+        // Sin texto accesible bajo el dedo (PDF, imagen…), o sin forma de ubicar la frase:
+        // reconocemos el texto de la captura.
         withOcr { lines -> speakOrWarn(OcrReader.textAt(lines, x, y, dp(24), Prefs.tapMode(this))) }
     }
 
@@ -291,8 +305,9 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             withOcr { lines -> speakOrWarn(OcrReader.textIn(lines, area)) }
             return
         }
-        val scan = ScreenTextReader.scan(this, area, minBlankArea())
-        if (mode == Prefs.OCR_NEVER || !ocrSupported() || (scan.segments.isNotEmpty() && scan.blankRegions.isEmpty())) {
+        val ocrAllowed = mode != Prefs.OCR_NEVER && ocrSupported()
+        val scan = ScreenTextReader.scan(this, area, minBlankArea(), ocrAllowed)
+        if (!ocrAllowed || (scan.segments.isNotEmpty() && scan.blankRegions.isEmpty())) {
             speakOrWarn(scan.segments)
             return
         }
@@ -438,7 +453,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
     private fun updateFloatingButton() {
         // Si el sistema ya muestra el botón de accesibilidad, no duplicamos el nuestro.
-        if (Prefs.floatingButton(this) && !systemButtonAvailable) showFloatingButton() else {
+        val systemButton = systemButtonAvailable || SystemShortcut.isAssigned(this)
+        if (Prefs.floatingButton(this) && !systemButton) showFloatingButton() else {
             removeView(floatingButton)
             floatingButton = null
         }

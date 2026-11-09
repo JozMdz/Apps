@@ -102,8 +102,14 @@ object ScreenTextReader {
         return screen
     }
 
-    /** Texto bajo el dedo en (x, y), según el modo de toque (frase, desde la frase o elemento completo). */
-    fun textAt(service: AccessibilityService, x: Int, y: Int, tolerancePx: Int, mode: String): List<Segment> {
+    /**
+     * Texto bajo el dedo en (x, y), según el modo de toque (frase, desde la frase o elemento completo).
+     * Devuelve null si el elemento tocado no permite ubicar sus frases (p. ej. una página de PDF entera
+     * como un solo texto) y [allowOcr] es true: entonces conviene reconocer el texto de la imagen.
+     */
+    fun textAt(
+        service: AccessibilityService, x: Int, y: Int, tolerancePx: Int, mode: String, allowOcr: Boolean,
+    ): List<Segment>? {
         for (window in readableWindows(service)) {
             if (!window.bounds.contains(x, y)) continue
             val items = collect(window, Long.MAX_VALUE).items
@@ -112,16 +118,16 @@ object ScreenTextReader {
                 ?: items.minByOrNull { distance(it.bounds, x, y) }
                     ?.takeIf { distance(it.bounds, x, y) <= tolerancePx }
                 ?: return emptyList()
-            return refineTap(hit, x, y, mode)
+            return refineTap(hit, x, y, mode, allowOcr)
         }
         return emptyList()
     }
 
-    private fun refineTap(item: Item, x: Int, y: Int, mode: String): List<Segment> {
+    private fun refineTap(item: Item, x: Int, y: Int, mode: String, allowOcr: Boolean): List<Segment>? {
         if (mode == Prefs.TAP_ELEMENT) return listOf(item.whole())
         val pieces = TextSplit.sentences(item.raw)
         if (pieces.size <= 1) return listOf(item.whole())
-        val boxes = charBoxes(item) ?: return listOf(item.whole())
+        val boxes = charBoxes(item) ?: return if (allowOcr) null else listOf(item.whole())
         val boundsOf = { s: Int, e: Int -> unionOf(boxes, s, e) }
         val pieceBounds = pieces.map { boundsOf(it.start, it.end) }
         var index = pieceBounds.indexOfFirst { it != null && it.contains(x, y) }
@@ -136,7 +142,7 @@ object ScreenTextReader {
      * Texto de todos los elementos dentro de [area], en orden de lectura (recortado a las frases que caen
      * dentro cuando el elemento queda a medias), y zonas grandes sin texto (≥ [minBlankArea] px²).
      */
-    fun scan(service: AccessibilityService, area: Rect, minBlankArea: Long): Scan {
+    fun scan(service: AccessibilityService, area: Rect, minBlankArea: Long, allowOcr: Boolean): Scan {
         val windows = readableWindows(service)
         val higherWindows = ArrayList<Rect>()
         val perWindow = ArrayList<Pair<Rect, List<Segment>>>()
@@ -146,9 +152,13 @@ object ScreenTextReader {
             if (Rect.intersects(window.bounds, area)) {
                 val collected = collect(window, minBlankArea)
                 fun visible(r: Rect) = higherWindows.none { it.contains(r.centerX(), r.centerY()) }
-                val segments = collected.items
-                    .filter { selected(it.bounds, area) && visible(it.bounds) }
-                    .flatMap { refineArea(it, area) }
+                val segments = ArrayList<Segment>()
+                for (item in collected.items) {
+                    if (!selected(item.bounds, area) || !visible(item.bounds)) continue
+                    val refined = refineArea(item, area, allowOcr)
+                    // No se pudo recortar a lo seleccionado: esa zona se leerá con OCR.
+                    if (refined == null) blanks.add(Rect(item.bounds)) else segments.addAll(refined)
+                }
                 if (segments.isNotEmpty()) perWindow.add(window.bounds to segments)
                 collected.blanks.filterTo(blanks) { Rect.intersects(it, area) && visible(it) }
             }
@@ -166,12 +176,15 @@ object ScreenTextReader {
         return Scan(result, blanks)
     }
 
-    /** Si el elemento queda entero dentro del área se lee completo; si no, solo sus frases seleccionadas. */
-    private fun refineArea(item: Item, area: Rect): List<Segment> {
+    /**
+     * Si el elemento queda entero dentro del área se lee completo; si no, solo sus frases seleccionadas.
+     * Devuelve null si no se pueden ubicar sus frases y [allowOcr] es true (se usará OCR en su zona).
+     */
+    private fun refineArea(item: Item, area: Rect, allowOcr: Boolean): List<Segment>? {
         if (area.contains(item.bounds)) return listOf(item.whole())
         val pieces = TextSplit.sentences(item.raw)
         if (pieces.size <= 1) return listOf(item.whole())
-        val boxes = charBoxes(item) ?: return listOf(item.whole())
+        val boxes = charBoxes(item) ?: return if (allowOcr) null else listOf(item.whole())
         val chosen = pieces.mapNotNull { piece ->
             val b = unionOf(boxes, piece.start, piece.end) ?: return@mapNotNull null
             if (selected(b, area)) Segment(piece.text, b) else null

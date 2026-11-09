@@ -59,6 +59,21 @@
             style="@style/SectionTitle"
             android:text="@string/driving_title" />
 
+        <TextView
+            android:id="@+id/system_button_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.15"
+            android:text="@string/system_button_warning"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1"
+            android:textColor="#E8710A" />
+
+        <Button
+            android:id="@+id/system_button_fix"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/system_button_fix" />
+
         <Switch
             android:id="@+id/floating_switch"
             android:layout_width="match_parent"
