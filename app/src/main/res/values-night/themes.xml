@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">#8AB4F8</item>
+    </style>
+
+    <style name="AppTheme.Dialog" parent="@android:style/Theme.Material.Dialog">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorAccent">#8AB4F8</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+</resources>

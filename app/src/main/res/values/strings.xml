@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Seleccionar para pronunciar</string>
+    <string name="service_label">Seleccionar para pronunciar</string>
+    <string name="service_summary">Toca o arrastra sobre la pantalla para escuchar el texto en voz alta.</string>
+    <string name="service_description">Activa el botón flotante (o el botón de accesibilidad) y después toca un elemento o arrastra un recuadro sobre la pantalla para que se lea en voz alta. Este servicio puede leer el contenido de la pantalla para poder pronunciarlo; no envía nada a ningún sitio.</string>
+    <string name="process_text_label">Pronunciar</string>
+
+    <string name="status_title">Estado del servicio</string>
+    <string name="status_on">Activado. Usa el botón flotante o el botón de accesibilidad para seleccionar texto.</string>
+    <string name="status_off">Desactivado. Actívalo en Ajustes &gt; Accesibilidad para poder seleccionar texto en la pantalla.</string>
+    <string name="open_accessibility_settings">Abrir ajustes de accesibilidad</string>
+
+    <string name="how_to_title">Cómo se usa</string>
+    <string name="how_to_body">1. Activa el servicio en Ajustes de accesibilidad.\n2. Toca el botón flotante o el botón de accesibilidad.\n3. Toca un elemento para leerlo, o arrastra un recuadro para leer todo lo que haya dentro. También puedes pulsar «Leer todo».\n4. Mientras lee, usa la barra inferior para pausar, saltar frases, cambiar la velocidad o detener.\n\nAdemás, al seleccionar texto en cualquier app aparecerá la opción «Pronunciar» en el menú, y también puedes compartir texto con esta app.</string>
+
+    <string name="voice_title">Voz</string>
+    <string name="speech_rate">Velocidad: %1$.2fx</string>
+    <string name="speech_pitch">Tono: %1$.2fx</string>
+    <string name="tts_settings">Ajustes de texto a voz del sistema</string>
+    <string name="highlight_text">Resaltar el texto que se está leyendo</string>
+    <string name="show_floating_button">Mostrar botón flotante</string>
+
+    <string name="test_title">Probar</string>
+    <string name="test_hint">Escribe algo para escucharlo…</string>
+    <string name="test_default">Hola. Esta es una prueba de Seleccionar para pronunciar.</string>
+    <string name="speak">Pronunciar</string>
+    <string name="stop">Detener</string>
+
+    <string name="select_hint">Toca un elemento o arrastra para seleccionar</string>
+    <string name="read_all">Leer todo</string>
+    <string name="cancel">Cancelar</string>
+    <string name="no_text_found">No se encontró texto para leer</string>
+    <string name="no_text_received">No se recibió texto</string>
+    <string name="tts_unavailable">El motor de texto a voz no está disponible</string>
+
+    <string name="cd_floating_button">Seleccionar para pronunciar</string>
+    <string name="cd_previous">Frase anterior</string>
+    <string name="cd_play_pause">Reproducir o pausar</string>
+    <string name="cd_next">Frase siguiente</string>
+    <string name="cd_speed">Cambiar velocidad</string>
+    <string name="cd_stop">Detener</string>
+</resources>

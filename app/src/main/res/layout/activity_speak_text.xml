@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minWidth="300dp"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/text_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:lineSpacingMultiplier="1.15"
+        android:maxLines="8"
+        android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_previous"
+            style="@style/RoundIconButton"
+            android:contentDescription="@string/cd_previous"
+            android:src="@drawable/ic_previous" />
+
+        <ImageButton
+            android:id="@+id/btn_play_pause"
+            style="@style/RoundIconButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:contentDescription="@string/cd_play_pause"
+            android:src="@drawable/ic_pause" />
+
+        <ImageButton
+            android:id="@+id/btn_next"
+            style="@style/RoundIconButton"
+            android:contentDescription="@string/cd_next"
+            android:src="@drawable/ic_next" />
+
+        <ImageButton
+            android:id="@+id/btn_stop"
+            style="@style/RoundIconButton"
+            android:contentDescription="@string/cd_stop"
+            android:src="@drawable/ic_close" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_speed"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:contentDescription="@string/cd_speed" />
+</LinearLayout>
