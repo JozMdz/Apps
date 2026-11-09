@@ -27,6 +27,17 @@
 
 Si activaste el botón de accesibilidad del sistema para esta app, el botón de la app no aparece (para no ver dos). Para poder ocultarlo y mostrarlo, quita el acceso directo en Accesibilidad → Seleccionar para pronunciar.</string>
 
+    <string name="error_toast">Ocurrió un error (%1$s). Se guardó en la app.</string>
+    <string name="error_title">Último error</string>
+    <string name="error_help">Si algo dejó de funcionar, mándame una captura de esto.</string>
+    <string name="error_clear">Borrar</string>
+    <string name="error_copy">Copiar</string>
+    <string name="error_copied">Copiado</string>
+    <string name="xiaomi_title">Para que no deje de funcionar (Xiaomi)</string>
+    <string name="xiaomi_help">HyperOS cierra las apps en segundo plano y no las deja volver a abrirse solas. Activa «Inicio automático» para esta app y, en Ahorro de batería, elige «Sin restricciones».</string>
+    <string name="xiaomi_autostart">Abrir inicio automático</string>
+    <string name="xiaomi_battery">Abrir ahorro de batería de la app</string>
+
     <string name="driving_title">Modo manejo</string>
     <string name="system_button_info">Estás usando el botón de accesibilidad del sistema (el ícono de la orilla de la pantalla):
 • Tócalo para seleccionar texto (tocar una frase, deslizar sobre renglones o «Leer todo»).

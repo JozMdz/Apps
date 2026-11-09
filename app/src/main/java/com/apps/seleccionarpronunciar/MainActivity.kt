@@ -8,6 +8,8 @@ import android.bluetooth.BluetoothManager
 import android.content.pm.PackageManager
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.app.StatusBarManager
 import android.graphics.drawable.Icon
@@ -48,6 +50,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashLog.install(this)
         setContentView(R.layout.activity_main)
 
         statusText = findViewById(R.id.status_text)
@@ -60,13 +63,36 @@ class MainActivity : Activity() {
         floatingSwitch = findViewById(R.id.floating_switch)
 
         openSettings.setOnClickListener { openAccessibilitySettings() }
+
+        findViewById<Button>(R.id.error_clear).setOnClickListener {
+            CrashLog.clear(this)
+            updateErrorSection()
+        }
+        findViewById<Button>(R.id.error_copy).setOnClickListener {
+            val text = CrashLog.last(this) ?: return@setOnClickListener
+            getSystemService(ClipboardManager::class.java)
+                ?.setPrimaryClip(ClipData.newPlainText("error", text))
+            Toast.makeText(this, R.string.error_copied, Toast.LENGTH_SHORT).show()
+        }
+
+        val isXiaomi = Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true) ||
+            Build.BRAND.equals("POCO", ignoreCase = true) || Build.BRAND.equals("Redmi", ignoreCase = true)
+        findViewById<View>(R.id.xiaomi_section).visibility = if (isXiaomi) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.xiaomi_autostart).setOnClickListener {
+            val autostart = Intent().setComponent(
+                ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+            )
+            if (!tryStart(autostart)) openAppDetails()
+        }
+        findViewById<Button>(R.id.xiaomi_battery).setOnClickListener {
+            val battery = Intent("miui.intent.action.HIDDEN_APPS_CONFIG_ACTIVITY")
+                .putExtra("package_name", packageName)
+                .putExtra("package_label", getString(R.string.app_name))
+            if (!tryStart(battery)) openAppDetails()
+        }
         restrictedButton = findViewById(R.id.allow_restricted)
         restrictedHelp = findViewById(R.id.restricted_help)
-        restrictedButton.setOnClickListener {
-            startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
-            )
-        }
+        restrictedButton.setOnClickListener { openAppDetails() }
 
         // Velocidad: 0,25x … 3,0x en pasos de 0,05. Tono: 0,5x … 2,0x en pasos de 0,05.
         rateSeek.setOnSeekBarChangeListener(seekListener { progress ->
@@ -167,6 +193,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        updateErrorSection()
         val enabled = isServiceEnabled()
         statusText.setText(if (enabled) R.string.status_on else R.string.status_off)
         openSettings.visibility = if (enabled) View.GONE else View.VISIBLE
@@ -195,6 +222,25 @@ class MainActivity : Activity() {
         // Si el servicio no está activo, nadie más usa el motor de voz.
         if (isFinishing && SelectToSpeakService.instance == null) Speaker.shutdown()
         super.onDestroy()
+    }
+
+    private fun updateErrorSection() {
+        val error = CrashLog.last(this)
+        findViewById<View>(R.id.error_section).visibility = if (error == null) View.GONE else View.VISIBLE
+        findViewById<TextView>(R.id.error_text).text = error
+    }
+
+    private fun tryStart(intent: Intent): Boolean = try {
+        startActivity(intent)
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    } catch (e: SecurityException) {
+        false
+    }
+
+    private fun openAppDetails() {
+        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
     }
 
     private fun bindRadio(groupId: Int, current: String, values: Map<Int, String>, onChange: (String) -> Unit) {

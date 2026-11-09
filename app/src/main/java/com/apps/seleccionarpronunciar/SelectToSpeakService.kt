@@ -60,10 +60,12 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
         private const val TILE_DELAY_MS = 450L
         private const val CAPTURE_DELAY_MS = 200L
+        private const val OCR_TIMEOUT_MS = 15_000L
     }
 
     private var ocr: OcrReader? = null
     private var ocrBusy = false
+    private var ocrStartedAt = 0L
 
     /** El sistema muestra su propio botón de accesibilidad para este servicio. */
     private var systemButtonAvailable = false
@@ -90,6 +92,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        CrashLog.install(this)
         instance = this
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         themed = ContextThemeWrapper(this, android.R.style.Theme_Material)
@@ -257,11 +260,22 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     // ---------------------------------------------------------------- acciones
 
     /** Botón flotante / botón de accesibilidad. */
-    fun toggle() {
+    fun toggle() = safely {
         when {
             selectionOverlay != null -> hideSelection()
             Speaker.state != Speaker.State.IDLE -> Speaker.stop()
             else -> showSelection()
+        }
+    }
+
+    /** Ejecuta una acción sin dejar que un error cierre el servicio; el error queda registrado. */
+    private inline fun safely(action: () -> Unit) {
+        try {
+            action()
+        } catch (e: Exception) {
+            CrashLog.record(this, e)
+            ocrBusy = false
+            Toast.makeText(this, getString(R.string.error_toast, e.javaClass.simpleName), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -275,9 +289,11 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         handler.removeCallbacksAndMessages(null)
         handler.postDelayed({
             if (instance !== this) return@postDelayed
-            when (Prefs.tileAction(this)) {
-                Prefs.TILE_READ_ALL -> readAll()
-                else -> showSelection()
+            safely {
+                when (Prefs.tileAction(this)) {
+                    Prefs.TILE_READ_ALL -> readAll()
+                    else -> showSelection()
+                }
             }
         }, TILE_DELAY_MS)
     }
@@ -343,13 +359,15 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             Toast.makeText(this, R.string.no_text_found, Toast.LENGTH_SHORT).show()
             return
         }
-        if (ocrBusy) return
+        // Si un reconocimiento anterior se quedó colgado, no bloqueamos para siempre.
+        if (ocrBusy && System.currentTimeMillis() - ocrStartedAt < OCR_TIMEOUT_MS) return
         ocrBusy = true
+        ocrStartedAt = System.currentTimeMillis()
         Toast.makeText(this, R.string.ocr_working, Toast.LENGTH_SHORT).show()
         // Esperamos a que desaparezca la capa de selección antes de capturar.
         handler.postDelayed({
             if (instance !== this) return@postDelayed
-            captureScreen { bitmap ->
+            safely { captureScreen { bitmap -> safely {
                 if (bitmap == null) {
                     ocrBusy = false
                     Toast.makeText(this, R.string.ocr_failed, Toast.LENGTH_SHORT).show()
@@ -362,10 +380,10 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
                     if (lines == null) {
                         Toast.makeText(this, R.string.ocr_failed, Toast.LENGTH_SHORT).show()
                     } else {
-                        onResult(lines)
+                        safely { onResult(lines) }
                     }
                 }
-            }
+            } } }
         }, CAPTURE_DELAY_MS)
     }
 
@@ -378,6 +396,9 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
                     Bitmap.wrapHardwareBuffer(buffer, screenshot.colorSpace)?.let { hardware ->
                         hardware.copy(Bitmap.Config.ARGB_8888, false).also { hardware.recycle() }
                     }
+                } catch (e: RuntimeException) {
+                    CrashLog.record(this@SelectToSpeakService, e)
+                    null
                 } finally {
                     buffer.close()
                 }
@@ -554,7 +575,13 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         if (selectionOverlay != null) return
         val root = FrameLayout(themed)
         root.addView(
-            SelectionView(themed, Prefs.dragRows(this), ::readAt, ::readArea),
+            // Se ejecuta después del toque: quitar la capa en medio de su propio evento táctil
+            // puede cerrar el servicio.
+            SelectionView(
+                themed, Prefs.dragRows(this),
+                { x, y -> handler.post { safely { readAt(x, y) } } },
+                { area -> handler.post { safely { readArea(area) } } },
+            ),
             FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
         )
 
@@ -573,8 +600,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
         }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        bar.addView(barButton(R.string.read_all) { readAll() })
-        bar.addView(barButton(R.string.cancel) { hideSelection() })
+        bar.addView(barButton(R.string.read_all) { handler.post { safely { readAll() } } })
+        bar.addView(barButton(R.string.cancel) { handler.post { safely { hideSelection() } } })
 
         root.addView(bar, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
