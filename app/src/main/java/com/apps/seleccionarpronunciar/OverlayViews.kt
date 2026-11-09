@@ -42,15 +42,16 @@ class SelectionView(
     private var curY = 0f
     private var dragging = false
     private val location = IntArray(2)
+    private val drawRect = RectF()
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), dimPaint)
         if (!dragging) return
         getLocationOnScreen(location)
-        val r = RectF(
-            min(startX, curX) - location[0], min(startY, curY) - location[1],
-            max(startX, curX) - location[0], max(startY, curY) - location[1],
-        )
+        val r = drawRect.apply {
+            set(min(startX, curX), min(startY, curY), max(startX, curX), max(startY, curY))
+            offset(-location[0].toFloat(), -location[1].toFloat())
+        }
         val radius = 8 * density
         canvas.drawRoundRect(r, radius, radius, fillPaint)
         canvas.drawRoundRect(r, radius, radius, strokePaint)
@@ -106,6 +107,7 @@ class HighlightView(context: Context) : View(context) {
         strokeWidth = 3 * density
     }
     private val location = IntArray(2)
+    private val drawRect = RectF()
     private var target: Rect? = null
 
     fun setTarget(bounds: Rect?) {
@@ -118,10 +120,11 @@ class HighlightView(context: Context) : View(context) {
         val t = target ?: return
         getLocationOnScreen(location)
         val pad = 4 * density
-        val r = RectF(
-            t.left - location[0] - pad, t.top - location[1] - pad,
-            t.right - location[0] + pad, t.bottom - location[1] + pad,
-        )
+        val r = drawRect.apply {
+            set(t)
+            offset(-location[0].toFloat(), -location[1].toFloat())
+            inset(-pad, -pad)
+        }
         val radius = 6 * density
         canvas.drawRoundRect(r, radius, radius, fillPaint)
         canvas.drawRoundRect(r, radius, radius, strokePaint)
