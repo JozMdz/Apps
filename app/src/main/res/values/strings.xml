@@ -8,8 +8,11 @@
 
     <string name="status_title">Estado del servicio</string>
     <string name="status_on">Activado. Usa el botón flotante o el botón de accesibilidad para seleccionar texto.</string>
-    <string name="status_off">Desactivado. Actívalo en Ajustes &gt; Accesibilidad para poder seleccionar texto en la pantalla.</string>
-    <string name="open_accessibility_settings">Abrir ajustes de accesibilidad</string>
+    <string name="status_off">Desactivado. Actívalo en Accesibilidad → Servicios descargados (al final de la pestaña General).</string>
+    <string name="open_accessibility_settings">Activar en Accesibilidad</string>
+    <string name="find_service_hint">Baja hasta «Servicios descargados» y toca «Seleccionar para pronunciar»</string>
+    <string name="restricted_help">¿El interruptor sale gris o dice «Configuración restringida»? Abre la información de la app, toca ⋮ (arriba a la derecha) → «Permitir configuración restringida» y vuelve a intentarlo.</string>
+    <string name="allow_restricted">Abrir información de la app</string>
 
     <string name="how_to_title">Cómo se usa</string>
     <string name="how_to_body">1. Activa el servicio en Ajustes de accesibilidad.\n2. Toca el botón flotante o el botón de accesibilidad.\n3. Toca un elemento para leerlo, o arrastra un recuadro para leer todo lo que haya dentro. También puedes pulsar «Leer todo».\n4. Mientras lee, usa la barra inferior para pausar, saltar frases, cambiar la velocidad o detener.\n\nAdemás, al seleccionar texto en cualquier app aparecerá la opción «Pronunciar» en el menú, y también puedes compartir texto con esta app.</string>

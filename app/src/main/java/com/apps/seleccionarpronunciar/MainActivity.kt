@@ -12,6 +12,7 @@ import android.view.View
 import android.widget.RadioGroup
 import android.annotation.TargetApi
 import android.os.Bundle
+import android.net.Uri
 import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
@@ -30,6 +31,8 @@ class MainActivity : Activity() {
     private lateinit var pitchSeek: SeekBar
     private lateinit var highlightSwitch: Switch
     private lateinit var floatingSwitch: Switch
+    private lateinit var restrictedButton: Button
+    private lateinit var restrictedHelp: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,8 +47,13 @@ class MainActivity : Activity() {
         highlightSwitch = findViewById(R.id.highlight_switch)
         floatingSwitch = findViewById(R.id.floating_switch)
 
-        openSettings.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        openSettings.setOnClickListener { openAccessibilitySettings() }
+        restrictedButton = findViewById(R.id.allow_restricted)
+        restrictedHelp = findViewById(R.id.restricted_help)
+        restrictedButton.setOnClickListener {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+            )
         }
 
         // Velocidad: 0,25x … 3,0x en pasos de 0,05. Tono: 0,5x … 2,0x en pasos de 0,05.
@@ -103,6 +111,11 @@ class MainActivity : Activity() {
         super.onResume()
         val enabled = isServiceEnabled()
         statusText.setText(if (enabled) R.string.status_on else R.string.status_off)
+        openSettings.visibility = if (enabled) View.GONE else View.VISIBLE
+        // Android 13+ bloquea los servicios de accesibilidad de apps instaladas fuera de la tienda.
+        val showRestricted = !enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        restrictedHelp.visibility = if (showRestricted) View.VISIBLE else View.GONE
+        restrictedButton.visibility = if (showRestricted) View.VISIBLE else View.GONE
 
         val rate = Prefs.rate(this)
         rateSeek.progress = ((rate - 0.25f) / 0.05f).toInt().coerceIn(0, rateSeek.max)
@@ -137,6 +150,16 @@ class MainActivity : Activity() {
             }
             if (msg != null) Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
         }
+    }
+
+    /** Abre Accesibilidad intentando resaltar directamente este servicio en la lista. */
+    private fun openAccessibilitySettings() {
+        val key = ComponentName(this, SelectToSpeakService::class.java).flattenToString()
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            .putExtra(":settings:fragment_args_key", key)
+            .putExtra(":settings:show_fragment_args", Bundle().apply { putString(":settings:fragment_args_key", key) })
+        Toast.makeText(this, R.string.find_service_hint, Toast.LENGTH_LONG).show()
+        startActivity(intent)
     }
 
     private fun isServiceEnabled(): Boolean {
