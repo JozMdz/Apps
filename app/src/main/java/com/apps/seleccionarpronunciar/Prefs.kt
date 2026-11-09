@@ -10,6 +10,10 @@ object Prefs {
     const val KEY_HIGHLIGHT = "highlight"
     const val KEY_FLOATING_BUTTON = "floating_button"
     const val KEY_TILE_ACTION = "tile_action"
+    const val KEY_OCR_MODE = "ocr_mode"
+    const val OCR_AUTO = "auto"
+    const val OCR_ALWAYS = "always"
+    const val OCR_NEVER = "never"
     const val TILE_SELECT = "select"
     const val TILE_READ_ALL = "read_all"
     private const val KEY_BUTTON_X = "button_x"
@@ -37,6 +41,9 @@ object Prefs {
     fun tileAction(context: Context): String = of(context).getString(KEY_TILE_ACTION, TILE_SELECT) ?: TILE_SELECT
     fun setTileAction(context: Context, value: String) =
         of(context).edit().putString(KEY_TILE_ACTION, value).apply()
+
+    fun ocrMode(context: Context): String = of(context).getString(KEY_OCR_MODE, OCR_AUTO) ?: OCR_AUTO
+    fun setOcrMode(context: Context, value: String) = of(context).edit().putString(KEY_OCR_MODE, value).apply()
 
     fun buttonPosition(context: Context, defX: Int, defY: Int): Pair<Int, Int> {
         val p = of(context)

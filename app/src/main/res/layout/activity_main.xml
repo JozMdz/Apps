@@ -101,12 +101,58 @@
             android:text="@string/show_floating_button"
             android:textAppearance="@android:style/TextAppearance.Material.Body1" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/floating_button_help"
+            android:textAppearance="@android:style/TextAppearance.Material.Body2" />
+
         <Button
             android:id="@+id/tts_settings"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tts_settings" />
+
+        <TextView
+            style="@style/SectionTitle"
+            android:text="@string/ocr_title" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.15"
+            android:text="@string/ocr_help"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <RadioGroup
+            android:id="@+id/ocr_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp">
+
+            <RadioButton
+                android:id="@+id/ocr_auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/ocr_auto" />
+
+            <RadioButton
+                android:id="@+id/ocr_always"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/ocr_always" />
+
+            <RadioButton
+                android:id="@+id/ocr_never"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/ocr_never" />
+        </RadioGroup>
 
         <TextView
             style="@style/SectionTitle"

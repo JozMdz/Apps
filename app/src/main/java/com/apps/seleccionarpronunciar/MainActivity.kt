@@ -79,6 +79,25 @@ class MainActivity : Activity() {
             }
         }
 
+        val ocrGroup = findViewById<RadioGroup>(R.id.ocr_group)
+        ocrGroup.check(
+            when (Prefs.ocrMode(this)) {
+                Prefs.OCR_ALWAYS -> R.id.ocr_always
+                Prefs.OCR_NEVER -> R.id.ocr_never
+                else -> R.id.ocr_auto
+            }
+        )
+        ocrGroup.setOnCheckedChangeListener { _, id ->
+            Prefs.setOcrMode(
+                this,
+                when (id) {
+                    R.id.ocr_always -> Prefs.OCR_ALWAYS
+                    R.id.ocr_never -> Prefs.OCR_NEVER
+                    else -> Prefs.OCR_AUTO
+                },
+            )
+        }
+
         val tileGroup = findViewById<RadioGroup>(R.id.tile_action_group)
         tileGroup.check(
             if (Prefs.tileAction(this) == Prefs.TILE_READ_ALL) R.id.tile_action_read_all else R.id.tile_action_select

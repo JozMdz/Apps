@@ -10,6 +10,9 @@ teléfono.
   atajo de accesibilidad del sistema.
 - **Modo selección**: toca un elemento para leerlo, arrastra un recuadro para leer todo lo que hay
   dentro, o pulsa **Leer todo** para leer la pantalla completa.
+- **Texto en imágenes y PDF (OCR)**: si no hay texto accesible (visores de PDF, fotos…) hace una
+  captura y reconoce el texto en el propio teléfono, sin internet (Android 11+). Configurable:
+  automático, siempre o nunca.
 - **Resaltado** del elemento que se está leyendo.
 - **Barra de control** mientras lee: frase anterior, pausa/reanudar, frase siguiente, velocidad y detener.
 - **Icono «Pronunciar» en Ajustes rápidos / Centro de control**: configurable para abrir el modo
@@ -64,6 +67,7 @@ El APK queda en `app/build/outputs/apk/release/app-release.apk` (firmado con la 
 | --- | --- |
 | `SelectToSpeakService.kt` | Servicio de accesibilidad: botón flotante, modo selección, barra de control y resaltado. |
 | `ScreenTextReader.kt` | Recorre el árbol de accesibilidad y extrae el texto visible del punto o recuadro elegido. |
+| `OcrReader.kt` | Reconocimiento de texto (ML Kit, en el dispositivo) sobre una captura de pantalla. |
 | `Speaker.kt` | Envoltorio de `TextToSpeech`: divide en frases, pausa/reanuda, salta y avisa de cambios. |
 | `OverlayViews.kt` | Vistas de selección (toque / arrastre) y de resaltado. |
 | `QuickTileService.kt` / `TileActionActivity.kt` | Icono del panel de Ajustes rápidos. |
@@ -72,6 +76,7 @@ El APK queda en `app/build/outputs/apk/release/app-release.apk` (firmado con la 
 
 ## Limitaciones
 
-Lee el texto que las apps exponen a los servicios de accesibilidad. No hace OCR, así que el texto
-dentro de imágenes o de apps que dibujan su propio contenido (algunos juegos, PDF renderizados como
-imagen) no se puede leer.
+- El OCR necesita Android 11 o superior y no funciona en pantallas protegidas contra capturas
+  (apps de bancos, contenido con DRM).
+- Si el botón de accesibilidad del sistema está asignado a esta app, el botón flotante propio se oculta
+  para no duplicarlo.

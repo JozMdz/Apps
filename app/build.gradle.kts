@@ -11,8 +11,13 @@ android {
         applicationId = "com.apps.seleccionarpronunciar"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
+
+        // Solo arquitecturas ARM (teléfonos) para no inflar el APK con las librerías del OCR.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
     }
 
     buildTypes {
@@ -33,4 +38,9 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    // Reconocimiento de texto en el dispositivo (sin internet), para PDF e imágenes.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }

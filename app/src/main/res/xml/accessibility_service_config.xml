@@ -4,6 +4,7 @@
     android:accessibilityFeedbackType="feedbackSpoken"
     android:accessibilityFlags="flagRetrieveInteractiveWindows|flagRequestAccessibilityButton|flagIncludeNotImportantViews|flagReportViewIds"
     android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
     android:description="@string/service_description"
     android:isAccessibilityTool="true"
     android:notificationTimeout="100"

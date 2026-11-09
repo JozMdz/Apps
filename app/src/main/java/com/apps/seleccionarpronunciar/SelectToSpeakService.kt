@@ -3,6 +3,9 @@ package com.apps.seleccionarpronunciar
 import android.accessibilityservice.AccessibilityButtonController
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
+import android.graphics.Bitmap
+import android.view.Display
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -46,7 +49,14 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             private set
 
         private const val TILE_DELAY_MS = 450L
+        private const val CAPTURE_DELAY_MS = 200L
     }
+
+    private var ocr: OcrReader? = null
+    private var ocrBusy = false
+
+    /** El sistema muestra su propio botón de accesibilidad para este servicio. */
+    private var systemButtonAvailable = false
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -80,7 +90,13 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
         val callback = object : AccessibilityButtonController.AccessibilityButtonCallback() {
             override fun onClicked(controller: AccessibilityButtonController) = toggle()
+
+            override fun onAvailabilityChanged(controller: AccessibilityButtonController, available: Boolean) {
+                systemButtonAvailable = available
+                updateFloatingButton()
+            }
         }
+        systemButtonAvailable = accessibilityButtonController.isAccessibilityButtonAvailable
         accessibilityButtonController.registerAccessibilityButtonCallback(callback)
         buttonCallback = callback
 
@@ -108,6 +124,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         if (instance !== this) return
         instance = null
         handler.removeCallbacksAndMessages(null)
+        ocr?.close()
+        ocr = null
         buttonCallback?.let { accessibilityButtonController.unregisterAccessibilityButtonCallback(it) }
         buttonCallback = null
         Prefs.of(this).unregisterOnSharedPreferenceChangeListener(this)
@@ -166,17 +184,105 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
     private fun readAt(x: Int, y: Int) {
         hideSelection()
-        speakOrWarn(ScreenTextReader.textAt(this, x, y, dp(24)))
+        val mode = Prefs.ocrMode(this)
+        if (mode != Prefs.OCR_ALWAYS) {
+            val fromTree = ScreenTextReader.textAt(this, x, y, dp(24))
+            if (fromTree.isNotEmpty() || mode == Prefs.OCR_NEVER) {
+                speakOrWarn(fromTree)
+                return
+            }
+        }
+        // Sin texto accesible bajo el dedo (PDF, imagen…): reconocemos el texto de la captura.
+        withOcr { lines -> speakOrWarn(OcrReader.textAt(lines, x, y, dp(24))) }
     }
 
     private fun readArea(area: Rect) {
         hideSelection()
-        speakOrWarn(ScreenTextReader.textIn(this, area))
+        val mode = Prefs.ocrMode(this)
+        if (mode == Prefs.OCR_ALWAYS) {
+            withOcr { lines -> speakOrWarn(OcrReader.textIn(lines, area)) }
+            return
+        }
+        val scan = ScreenTextReader.scan(this, area, minBlankArea())
+        if (mode == Prefs.OCR_NEVER || !ocrSupported() || (scan.segments.isNotEmpty() && scan.blankRegions.isEmpty())) {
+            speakOrWarn(scan.segments)
+            return
+        }
+        withOcr { lines ->
+            val fromImage = if (scan.segments.isEmpty()) {
+                OcrReader.textIn(lines, area)
+            } else {
+                // Solo lo que hay dentro de las zonas sin texto accesible, sin repetir lo ya leído.
+                OcrReader.textIn(lines, area, scan.blankRegions).filter { ocr ->
+                    val b = ocr.bounds!!
+                    scan.segments.none { it.bounds!!.contains(b.centerX(), b.centerY()) }
+                }
+            }
+            speakOrWarn(OcrReader.merge(scan.segments, fromImage))
+        }
     }
 
     private fun readAll() {
-        hideSelection()
-        speakOrWarn(ScreenTextReader.allText(this))
+        readArea(ScreenTextReader.screenBounds(this))
+    }
+
+    /** Zonas sin texto a partir de este tamaño se consideran contenido a reconocer (≈ 120 × 120 dp). */
+    private fun minBlankArea(): Long = dp(120).toLong() * dp(120)
+
+    private fun ocrSupported() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
+    /**
+     * Hace una captura de pantalla (sin nuestras capas de selección) y reconoce su texto.
+     * [onResult] recibe las líneas reconocidas; si falla, se avisa al usuario.
+     */
+    private fun withOcr(onResult: (List<OcrReader.Line>) -> Unit) {
+        if (!ocrSupported()) {
+            Toast.makeText(this, R.string.no_text_found, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (ocrBusy) return
+        ocrBusy = true
+        Toast.makeText(this, R.string.ocr_working, Toast.LENGTH_SHORT).show()
+        // Esperamos a que desaparezca la capa de selección antes de capturar.
+        handler.postDelayed({
+            if (instance !== this) return@postDelayed
+            captureScreen { bitmap ->
+                if (bitmap == null) {
+                    ocrBusy = false
+                    Toast.makeText(this, R.string.ocr_failed, Toast.LENGTH_SHORT).show()
+                    return@captureScreen
+                }
+                val reader = ocr ?: OcrReader().also { ocr = it }
+                reader.recognize(bitmap) { lines ->
+                    ocrBusy = false
+                    if (instance !== this) return@recognize
+                    if (lines == null) {
+                        Toast.makeText(this, R.string.ocr_failed, Toast.LENGTH_SHORT).show()
+                    } else {
+                        onResult(lines)
+                    }
+                }
+            }
+        }, CAPTURE_DELAY_MS)
+    }
+
+    @TargetApi(Build.VERSION_CODES.R)
+    private fun captureScreen(onBitmap: (Bitmap?) -> Unit) {
+        takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
+            override fun onSuccess(screenshot: ScreenshotResult) {
+                val buffer = screenshot.hardwareBuffer
+                val bitmap = try {
+                    Bitmap.wrapHardwareBuffer(buffer, screenshot.colorSpace)?.let { hardware ->
+                        hardware.copy(Bitmap.Config.ARGB_8888, false).also { hardware.recycle() }
+                    }
+                } finally {
+                    buffer.close()
+                }
+                onBitmap(bitmap)
+            }
+
+            override fun onFailure(errorCode: Int) = onBitmap(null)
+        })
     }
 
     private fun speakOrWarn(segments: List<Segment>) {
@@ -243,7 +349,8 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     // --- botón flotante
 
     private fun updateFloatingButton() {
-        if (Prefs.floatingButton(this)) showFloatingButton() else {
+        // Si el sistema ya muestra el botón de accesibilidad, no duplicamos el nuestro.
+        if (Prefs.floatingButton(this) && !systemButtonAvailable) showFloatingButton() else {
             removeView(floatingButton)
             floatingButton = null
         }
