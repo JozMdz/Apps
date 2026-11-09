@@ -4,6 +4,13 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
+import android.app.StatusBarManager
+import android.graphics.drawable.Icon
+import android.os.Build
+import android.service.quicksettings.TileService
+import android.view.View
+import android.widget.RadioGroup
+import android.annotation.TargetApi
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
@@ -64,6 +71,22 @@ class MainActivity : Activity() {
             }
         }
 
+        val tileGroup = findViewById<RadioGroup>(R.id.tile_action_group)
+        tileGroup.check(
+            if (Prefs.tileAction(this) == Prefs.TILE_READ_ALL) R.id.tile_action_read_all else R.id.tile_action_select
+        )
+        tileGroup.setOnCheckedChangeListener { _, id ->
+            Prefs.setTileAction(this, if (id == R.id.tile_action_read_all) Prefs.TILE_READ_ALL else Prefs.TILE_SELECT)
+            TileService.requestListeningState(this, ComponentName(this, QuickTileService::class.java))
+        }
+
+        val addTile = findViewById<Button>(R.id.tile_add)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            addTile.setOnClickListener { requestAddTile() }
+        } else {
+            addTile.visibility = View.GONE
+        }
+
         val testText = findViewById<EditText>(R.id.test_text)
         findViewById<Button>(R.id.test_speak).setOnClickListener {
             val text = testText.text.toString().trim()
@@ -95,6 +118,25 @@ class MainActivity : Activity() {
         // Si el servicio no está activo, nadie más usa el motor de voz.
         if (isFinishing && SelectToSpeakService.instance == null) Speaker.shutdown()
         super.onDestroy()
+    }
+
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    private fun requestAddTile() {
+        val statusBar = getSystemService(StatusBarManager::class.java) ?: return
+        statusBar.requestAddTileService(
+            ComponentName(this, QuickTileService::class.java),
+            getString(R.string.tile_label),
+            Icon.createWithResource(this, R.drawable.ic_speak),
+            mainExecutor,
+        ) { result ->
+            val msg = when (result) {
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED,
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED -> R.string.tile_added
+                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED -> null
+                else -> R.string.tile_add_failed
+            }
+            if (msg != null) Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun isServiceEnabled(): Boolean {

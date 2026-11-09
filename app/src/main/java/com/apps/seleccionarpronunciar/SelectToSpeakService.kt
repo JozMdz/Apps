@@ -11,6 +11,8 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -42,7 +44,11 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         @Volatile
         var instance: SelectToSpeakService? = null
             private set
+
+        private const val TILE_DELAY_MS = 450L
     }
+
+    private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var windowManager: WindowManager
     private lateinit var themed: Context
@@ -101,6 +107,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
     private fun cleanUp() {
         if (instance !== this) return
         instance = null
+        handler.removeCallbacksAndMessages(null)
         buttonCallback?.let { accessibilityButtonController.unregisterAccessibilityButtonCallback(it) }
         buttonCallback = null
         Prefs.of(this).unregisterOnSharedPreferenceChangeListener(this)
@@ -138,6 +145,23 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             Speaker.state != Speaker.State.IDLE -> Speaker.stop()
             else -> showSelection()
         }
+    }
+
+    /** Icono de Ajustes rápidos: se espera a que el panel termine de cerrarse antes de actuar. */
+    fun runTileAction() {
+        hideSelection()
+        if (Speaker.state != Speaker.State.IDLE) {
+            Speaker.stop()
+            return
+        }
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed({
+            if (instance !== this) return@postDelayed
+            when (Prefs.tileAction(this)) {
+                Prefs.TILE_READ_ALL -> readAll()
+                else -> showSelection()
+            }
+        }, TILE_DELAY_MS)
     }
 
     private fun readAt(x: Int, y: Int) {

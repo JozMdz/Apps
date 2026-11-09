@@ -21,6 +21,17 @@
     <string name="highlight_text">Resaltar el texto que se está leyendo</string>
     <string name="show_floating_button">Mostrar botón flotante</string>
 
+    <string name="tile_title">Icono de Ajustes rápidos</string>
+    <string name="tile_label">Pronunciar</string>
+    <string name="tile_subtitle_off">Desactivado</string>
+    <string name="tile_action_select">Seleccionar texto</string>
+    <string name="tile_action_read_all">Leer toda la pantalla</string>
+    <string name="tile_action_prompt">Al tocar el icono:</string>
+    <string name="tile_help">Añade el icono «Pronunciar» al panel de Ajustes rápidos (en Xiaomi: Centro de control → Editar). Si ya está leyendo, tocarlo detiene la lectura. Mantenerlo pulsado abre esta pantalla.</string>
+    <string name="tile_add">Añadir icono al panel</string>
+    <string name="tile_added">Icono añadido</string>
+    <string name="tile_add_failed">No se pudo añadir automáticamente. Añádelo desde Editar en el panel.</string>
+
     <string name="test_title">Probar</string>
     <string name="test_hint">Escribe algo para escucharlo…</string>
     <string name="test_default">Hola. Esta es una prueba de Seleccionar para pronunciar.</string>

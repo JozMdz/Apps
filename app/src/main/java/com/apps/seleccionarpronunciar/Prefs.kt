@@ -9,6 +9,9 @@ object Prefs {
     const val KEY_PITCH = "speech_pitch"
     const val KEY_HIGHLIGHT = "highlight"
     const val KEY_FLOATING_BUTTON = "floating_button"
+    const val KEY_TILE_ACTION = "tile_action"
+    const val TILE_SELECT = "select"
+    const val TILE_READ_ALL = "read_all"
     private const val KEY_BUTTON_X = "button_x"
     private const val KEY_BUTTON_Y = "button_y"
 
@@ -30,6 +33,10 @@ object Prefs {
     fun floatingButton(context: Context): Boolean = of(context).getBoolean(KEY_FLOATING_BUTTON, true)
     fun setFloatingButton(context: Context, value: Boolean) =
         of(context).edit().putBoolean(KEY_FLOATING_BUTTON, value).apply()
+
+    fun tileAction(context: Context): String = of(context).getString(KEY_TILE_ACTION, TILE_SELECT) ?: TILE_SELECT
+    fun setTileAction(context: Context, value: String) =
+        of(context).edit().putString(KEY_TILE_ACTION, value).apply()
 
     fun buttonPosition(context: Context, defX: Int, defY: Int): Pair<Int, Int> {
         val p = of(context)
