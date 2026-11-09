@@ -104,8 +104,6 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, checked -> Prefs.setDragRows(this@MainActivity, checked) }
         }
 
-        findViewById<Button>(R.id.system_button_fix).setOnClickListener { openAccessibilitySettings() }
-
         carAutoSwitch = findViewById(R.id.car_auto_switch)
         carPick = findViewById(R.id.car_pick)
         carAutoSwitch.setOnCheckedChangeListener { _, checked ->
@@ -187,8 +185,9 @@ class MainActivity : Activity() {
         floatingSwitch.isChecked = Prefs.floatingButton(this)
         carAutoSwitch.isChecked = Prefs.carAuto(this)
         val systemButton = SystemShortcut.isAssigned(this)
-        findViewById<View>(R.id.system_button_warning).visibility = if (systemButton) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.system_button_fix).visibility = if (systemButton) View.VISIBLE else View.GONE
+        // Con el botón del sistema, las opciones del botón propio (visible, modo manejo) no aplican.
+        findViewById<View>(R.id.system_button_info).visibility = if (systemButton) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.own_button_options).visibility = if (systemButton) View.GONE else View.VISIBLE
         updateCarPickLabel()
     }
 
