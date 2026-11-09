@@ -11,6 +11,17 @@ object Prefs {
     const val KEY_FLOATING_BUTTON = "floating_button"
     const val KEY_TILE_ACTION = "tile_action"
     const val KEY_OCR_MODE = "ocr_mode"
+    const val KEY_TAP_MODE = "tap_mode"
+    const val TAP_SENTENCE = "sentence"
+    const val TAP_FROM = "from"
+    const val TAP_ELEMENT = "element"
+    const val KEY_DRAG_ROWS = "drag_rows"
+    const val KEY_MUSIC_MODE = "music_mode"
+    const val MUSIC_DUCK = "duck"
+    const val MUSIC_PAUSE = "pause"
+    const val MUSIC_NONE = "none"
+    const val KEY_CAR_AUTO = "car_auto"
+    const val KEY_CAR_DEVICES = "car_devices"
     const val OCR_AUTO = "auto"
     const val OCR_ALWAYS = "always"
     const val OCR_NEVER = "never"
@@ -44,6 +55,24 @@ object Prefs {
 
     fun ocrMode(context: Context): String = of(context).getString(KEY_OCR_MODE, OCR_AUTO) ?: OCR_AUTO
     fun setOcrMode(context: Context, value: String) = of(context).edit().putString(KEY_OCR_MODE, value).apply()
+
+    fun tapMode(context: Context): String = of(context).getString(KEY_TAP_MODE, TAP_FROM) ?: TAP_FROM
+    fun setTapMode(context: Context, value: String) = of(context).edit().putString(KEY_TAP_MODE, value).apply()
+
+    fun dragRows(context: Context): Boolean = of(context).getBoolean(KEY_DRAG_ROWS, true)
+    fun setDragRows(context: Context, value: Boolean) = of(context).edit().putBoolean(KEY_DRAG_ROWS, value).apply()
+
+    fun musicMode(context: Context): String = of(context).getString(KEY_MUSIC_MODE, MUSIC_DUCK) ?: MUSIC_DUCK
+    fun setMusicMode(context: Context, value: String) = of(context).edit().putString(KEY_MUSIC_MODE, value).apply()
+
+    /** Mostrar el botón solo mientras el teléfono está conectado al Bluetooth del carro. */
+    fun carAuto(context: Context): Boolean = of(context).getBoolean(KEY_CAR_AUTO, false)
+    fun setCarAuto(context: Context, value: Boolean) = of(context).edit().putBoolean(KEY_CAR_AUTO, value).apply()
+
+    /** Direcciones Bluetooth de los dispositivos del carro. */
+    fun carDevices(context: Context): Set<String> = of(context).getStringSet(KEY_CAR_DEVICES, emptySet()) ?: emptySet()
+    fun setCarDevices(context: Context, value: Set<String>) =
+        of(context).edit().putStringSet(KEY_CAR_DEVICES, HashSet(value)).apply()
 
     fun buttonPosition(context: Context, defX: Int, defY: Int): Pair<Int, Int> {
         val p = of(context)

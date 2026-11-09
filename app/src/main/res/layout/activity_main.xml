@@ -57,6 +57,126 @@
 
         <TextView
             style="@style/SectionTitle"
+            android:text="@string/driving_title" />
+
+        <Switch
+            android:id="@+id/floating_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/show_floating_button"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/floating_button_help"
+            android:lineSpacingMultiplier="1.15"
+            android:textAppearance="@android:style/TextAppearance.Material.Body2" />
+
+        <Switch
+            android:id="@+id/car_auto_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/car_auto"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <Button
+            android:id="@+id/car_pick"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/car_pick" />
+
+        <TextView
+            style="@style/SectionTitle"
+            android:text="@string/selection_title" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.15"
+            android:text="@string/tap_prompt"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <RadioGroup
+            android:id="@+id/tap_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/tap_sentence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/tap_sentence" />
+
+            <RadioButton
+                android:id="@+id/tap_from"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/tap_from" />
+
+            <RadioButton
+                android:id="@+id/tap_element"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/tap_element" />
+        </RadioGroup>
+
+        <Switch
+            android:id="@+id/drag_rows_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/drag_rows"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <TextView
+            style="@style/SectionTitle"
+            android:text="@string/audio_title" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingMultiplier="1.15"
+            android:text="@string/music_prompt"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+
+        <RadioGroup
+            android:id="@+id/music_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/music_duck"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/music_duck" />
+
+            <RadioButton
+                android:id="@+id/music_pause"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/music_pause" />
+
+            <RadioButton
+                android:id="@+id/music_none"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/music_none" />
+        </RadioGroup>
+
+        <TextView
+            style="@style/SectionTitle"
             android:text="@string/voice_title" />
 
         <TextView
@@ -93,20 +213,6 @@
             android:text="@string/highlight_text"
             android:textAppearance="@android:style/TextAppearance.Material.Body1" />
 
-        <Switch
-            android:id="@+id/floating_switch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/show_floating_button"
-            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/floating_button_help"
-            android:textAppearance="@android:style/TextAppearance.Material.Body2" />
 
         <Button
             android:id="@+id/tts_settings"

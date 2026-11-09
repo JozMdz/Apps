@@ -2,7 +2,15 @@ package com.apps.seleccionarpronunciar
 
 import android.accessibilityservice.AccessibilityButtonController
 import android.accessibilityservice.AccessibilityService
+import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.annotation.TargetApi
 import android.graphics.Bitmap
 import android.view.Display
@@ -102,6 +110,81 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
 
         updateFloatingButton()
         onSpeakerChanged(Speaker.state, Speaker.currentSegment)
+
+        val filter = IntentFilter().apply {
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(bluetoothReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(bluetoothReceiver, filter)
+        }
+        receiverRegistered = true
+        checkCarConnection()
+    }
+
+    // ---------------------------------------------------------------- modo manejo (Bluetooth del carro)
+
+    private var receiverRegistered = false
+
+    private val bluetoothReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (!Prefs.carAuto(context)) return
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            }
+            val address = device?.address ?: return
+            if (address !in Prefs.carDevices(context)) return
+            when (intent.action) {
+                BluetoothDevice.ACTION_ACL_CONNECTED -> setDrivingMode(true)
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> setDrivingMode(false)
+            }
+        }
+    }
+
+    private fun setDrivingMode(on: Boolean) {
+        if (!on) Speaker.stop()
+        if (Prefs.floatingButton(this) == on) return
+        Prefs.setFloatingButton(this, on)
+        Toast.makeText(this, if (on) R.string.driving_on else R.string.driving_off, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun hasBluetoothPermission() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+        checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+
+    /** Con el modo automático activo, muestra u oculta el botón según si el carro está conectado ahora. */
+    private fun checkCarConnection() {
+        if (!Prefs.carAuto(this) || !hasBluetoothPermission()) return
+        val devices = Prefs.carDevices(this)
+        if (devices.isEmpty()) return
+        val adapter = getSystemService(BluetoothManager::class.java)?.adapter ?: return
+        val profiles = intArrayOf(BluetoothProfile.A2DP, BluetoothProfile.HEADSET)
+        var pending = profiles.size
+        var connected = false
+        for (profile in profiles) {
+            val ok = try {
+                adapter.getProfileProxy(this, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(p: Int, proxy: BluetoothProfile) {
+                        try {
+                            if (proxy.connectedDevices.any { it.address in devices }) connected = true
+                        } catch (e: SecurityException) {
+                            // Sin permiso: no podemos saberlo.
+                        }
+                        adapter.closeProfileProxy(p, proxy)
+                        if (--pending == 0 && instance === this@SelectToSpeakService) setDrivingMode(connected)
+                    }
+
+                    override fun onServiceDisconnected(p: Int) = Unit
+                }, profile)
+            } catch (e: SecurityException) {
+                false
+            }
+            if (!ok) pending--
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
@@ -115,7 +198,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         super.onDestroy()
     }
 
-    override fun onUnbind(intent: android.content.Intent?): Boolean {
+    override fun onUnbind(intent: Intent?): Boolean {
         cleanUp()
         return super.onUnbind(intent)
     }
@@ -126,6 +209,10 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         handler.removeCallbacksAndMessages(null)
         ocr?.close()
         ocr = null
+        if (receiverRegistered) {
+            unregisterReceiver(bluetoothReceiver)
+            receiverRegistered = false
+        }
         buttonCallback?.let { accessibilityButtonController.unregisterAccessibilityButtonCallback(it) }
         buttonCallback = null
         Prefs.of(this).unregisterOnSharedPreferenceChangeListener(this)
@@ -151,6 +238,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             Prefs.KEY_FLOATING_BUTTON -> updateFloatingButton()
             Prefs.KEY_HIGHLIGHT -> onSpeakerChanged(Speaker.state, Speaker.currentSegment)
             Prefs.KEY_RATE -> updateSpeedLabel()
+            Prefs.KEY_CAR_AUTO, Prefs.KEY_CAR_DEVICES -> checkCarConnection()
         }
     }
 
@@ -186,14 +274,14 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         hideSelection()
         val mode = Prefs.ocrMode(this)
         if (mode != Prefs.OCR_ALWAYS) {
-            val fromTree = ScreenTextReader.textAt(this, x, y, dp(24))
+            val fromTree = ScreenTextReader.textAt(this, x, y, dp(24), Prefs.tapMode(this))
             if (fromTree.isNotEmpty() || mode == Prefs.OCR_NEVER) {
                 speakOrWarn(fromTree)
                 return
             }
         }
         // Sin texto accesible bajo el dedo (PDF, imagen…): reconocemos el texto de la captura.
-        withOcr { lines -> speakOrWarn(OcrReader.textAt(lines, x, y, dp(24))) }
+        withOcr { lines -> speakOrWarn(OcrReader.textAt(lines, x, y, dp(24), Prefs.tapMode(this))) }
     }
 
     private fun readArea(area: Rect) {
@@ -369,6 +457,16 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             contentDescription = getString(R.string.cd_floating_button)
             isClickable = true
             setOnClickListener { toggle() }
+            // Mantener pulsado: ocultar el botón (p. ej. al terminar de manejar).
+            setOnLongClickListener {
+                handler.post {
+                    Speaker.stop()
+                    hideSelection()
+                    Prefs.setFloatingButton(this@SelectToSpeakService, false)
+                    Toast.makeText(this@SelectToSpeakService, R.string.button_hidden, Toast.LENGTH_LONG).show()
+                }
+                true
+            }
         }
         val metrics = resources.displayMetrics
         val (x, y) = Prefs.buttonPosition(this, metrics.widthPixels - size - dp(8), metrics.heightPixels / 3)
@@ -440,7 +538,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
         if (selectionOverlay != null) return
         val root = FrameLayout(themed)
         root.addView(
-            SelectionView(themed, ::readAt, ::readArea),
+            SelectionView(themed, Prefs.dragRows(this), ::readAt, ::readArea),
             FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
         )
 
@@ -455,7 +553,7 @@ class SelectToSpeakService : AccessibilityService(), Speaker.Listener,
             elevation = dp(8).toFloat()
         }
         bar.addView(TextView(themed).apply {
-            setText(R.string.select_hint)
+            setText(if (Prefs.dragRows(this@SelectToSpeakService)) R.string.select_hint_rows else R.string.select_hint)
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
         }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))

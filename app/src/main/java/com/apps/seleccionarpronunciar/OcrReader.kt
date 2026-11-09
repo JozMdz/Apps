@@ -44,13 +44,43 @@ class OcrReader {
     }
 
     companion object {
-        /** El párrafo bajo el dedo (o el más cercano si está muy cerca). */
-        fun textAt(lines: List<Line>, x: Int, y: Int, tolerancePx: Int): List<Segment> {
-            val line = lines.firstOrNull { it.box.contains(x, y) }
+        /** Texto bajo el dedo según el modo de toque (frase, desde la frase o el párrafo completo). */
+        fun textAt(lines: List<Line>, x: Int, y: Int, tolerancePx: Int, mode: String): List<Segment> {
+            val tapped = lines.firstOrNull { it.box.contains(x, y) }
                 ?: lines.minByOrNull { ScreenTextReader.distance(it.box, x, y) }
                     ?.takeIf { ScreenTextReader.distance(it.box, x, y) <= tolerancePx }
                 ?: return emptyList()
-            return group(lines.filter { it.block == line.block })
+            val blockLines = lines.filter { it.block == tapped.block }
+            if (mode == Prefs.TAP_ELEMENT) return group(blockLines)
+
+            // Texto del párrafo con la posición de cada línea, para localizar la frase tocada.
+            val text = StringBuilder()
+            val starts = IntArray(blockLines.size)
+            blockLines.forEachIndexed { i, line ->
+                if (text.isNotEmpty()) text.append(' ')
+                starts[i] = text.length
+                text.append(line.text)
+            }
+            val full = text.toString()
+            val pieces = TextSplit.sentences(full)
+            if (pieces.isEmpty()) return emptyList()
+
+            // Carácter aproximado bajo el dedo según la posición horizontal dentro de la línea.
+            val li = blockLines.indexOf(tapped)
+            val fraction = ((x - tapped.box.left).toFloat() / tapped.box.width().coerceAtLeast(1)).coerceIn(0f, 1f)
+            val offset = starts[li] + (fraction * (tapped.text.length - 1).coerceAtLeast(0)).toInt()
+            val index = pieces.indexOfFirst { offset < it.end }.let { if (it < 0) pieces.lastIndex else it }
+
+            val boundsOf = { s: Int, e: Int ->
+                var r: Rect? = null
+                blockLines.forEachIndexed { i, line ->
+                    val ls = starts[i]
+                    val le = ls + line.text.length
+                    if (ls < e && s < le) r = (r ?: Rect(line.box)).apply { union(line.box) }
+                }
+                r
+            }
+            return TextSplit.pickForTap(pieces, index, mode, tapped.box, boundsOf)
         }
 
         /** Las líneas dentro de [area] (y, si se indica, dentro de alguna de [regions]), por párrafos. */

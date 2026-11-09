@@ -2,6 +2,9 @@ package com.apps.seleccionarpronunciar
 
 import android.content.Context
 import android.graphics.Rect
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -36,6 +39,16 @@ object Speaker {
     private var ready = false
     private var pendingStart = false
 
+    private var audioManager: AudioManager? = null
+    private var focusRequest: AudioFocusRequest? = null
+    private var pausedByFocusLoss = false
+
+    /** Como las indicaciones del GPS: el sistema y el carro las mezclan sobre la música. */
+    private val speechAttributes: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build()
+
     private var segments: List<Segment> = emptyList()
     private var index = 0
     private var currentUtteranceId: String? = null
@@ -60,6 +73,7 @@ object Speaker {
         if (tts != null) return
         val ctx = context.applicationContext
         appContext = ctx
+        audioManager = ctx.getSystemService(AudioManager::class.java)
         ready = false
         tts = TextToSpeech(ctx) { status ->
             main.post { onTtsInit(status) }
@@ -70,6 +84,7 @@ object Speaker {
         val engine = tts ?: return
         if (status == TextToSpeech.SUCCESS) {
             ready = true
+            engine.setAudioAttributes(speechAttributes)
             engine.setOnUtteranceProgressListener(progressListener)
             if (pendingStart) {
                 pendingStart = false
@@ -81,6 +96,7 @@ object Speaker {
             }
             engine.shutdown()
             tts = null
+            abandonFocus()
             pendingStart = false
             segments = emptyList()
             setState(State.IDLE)
@@ -99,6 +115,7 @@ object Speaker {
             return
         }
         state = State.SPEAKING
+        requestFocus()
         if (ready) speakCurrent() else {
             pendingStart = true
             notifyListeners()
@@ -107,13 +124,17 @@ object Speaker {
 
     fun pause() {
         if (state != State.SPEAKING) return
+        pausedByFocusLoss = false
         cancelCurrent()
+        abandonFocus()
         setState(State.PAUSED)
     }
 
     fun resume() {
         if (state != State.PAUSED) return
+        pausedByFocusLoss = false
         state = State.SPEAKING
+        requestFocus()
         if (ready) speakCurrent() else pendingStart = true
     }
 
@@ -142,6 +163,8 @@ object Speaker {
 
     fun stop() {
         cancelCurrent()
+        abandonFocus()
+        pausedByFocusLoss = false
         pendingStart = false
         segments = emptyList()
         index = 0
@@ -154,6 +177,49 @@ object Speaker {
         tts?.shutdown()
         tts = null
         ready = false
+    }
+
+    // ---------------------------------------------------------------- foco de audio
+
+    /** Pide el audio para que la música (Spotify, etc.) baje el volumen o se pause mientras se lee. */
+    private fun requestFocus() {
+        val am = audioManager ?: return
+        val ctx = appContext ?: return
+        val gain = when (Prefs.musicMode(ctx)) {
+            Prefs.MUSIC_PAUSE -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+            Prefs.MUSIC_DUCK -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+            else -> return
+        }
+        if (focusRequest != null) return
+        val request = AudioFocusRequest.Builder(gain)
+            .setAudioAttributes(speechAttributes)
+            .setOnAudioFocusChangeListener(focusListener, main)
+            .build()
+        focusRequest = request
+        am.requestAudioFocus(request)
+    }
+
+    private fun abandonFocus() {
+        val request = focusRequest ?: return
+        focusRequest = null
+        audioManager?.abandonAudioFocusRequest(request)
+    }
+
+    private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
+        when (change) {
+            // Una llamada u otra app necesita el audio: pausamos y seguimos al recuperarlo.
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (state == State.SPEAKING) {
+                cancelCurrent()
+                pausedByFocusLoss = true
+                setState(State.PAUSED)
+            }
+            AudioManager.AUDIOFOCUS_LOSS -> if (state == State.SPEAKING) pause()
+            AudioManager.AUDIOFOCUS_GAIN -> if (state == State.PAUSED && pausedByFocusLoss) {
+                pausedByFocusLoss = false
+                state = State.SPEAKING
+                if (ready) speakCurrent() else pendingStart = true
+            }
+        }
     }
 
     private fun cancelCurrent() {

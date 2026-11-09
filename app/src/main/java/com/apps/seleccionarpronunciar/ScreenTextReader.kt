@@ -2,6 +2,8 @@ package com.apps.seleccionarpronunciar
 
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Rect
+import android.graphics.RectF
+import android.os.Bundle
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import kotlin.math.hypot
@@ -10,6 +12,7 @@ import kotlin.math.hypot
 object ScreenTextReader {
 
     private const val MAX_DEPTH = 80
+    private const val MAX_CHAR_QUERY = 5000
 
     /**
      * Resultado de explorar un área: el texto encontrado y las zonas grandes sin texto accesible
@@ -17,9 +20,14 @@ object ScreenTextReader {
      */
     class Scan(val segments: List<Segment>, val blankRegions: List<Rect>)
 
+    /** Un elemento con texto. [raw] es el texto sin recortar (los índices de caracteres se refieren a él). */
+    private class Item(val text: String, val raw: String, val bounds: Rect, val node: AccessibilityNodeInfo?) {
+        fun whole() = Segment(text, bounds)
+    }
+
     private class WindowRoot(val layer: Int, val bounds: Rect, val root: AccessibilityNodeInfo)
 
-    private class Collected(val segments: MutableList<Segment> = ArrayList(), val blanks: MutableList<Rect> = ArrayList())
+    private class Collected(val items: MutableList<Item> = ArrayList(), val blanks: MutableList<Rect> = ArrayList())
 
     /** Ventanas legibles, de la más alta (encima) a la más baja. */
     private fun readableWindows(service: AccessibilityService): List<WindowRoot> {
@@ -60,23 +68,24 @@ object ScreenTextReader {
         val bounds = Rect().also { node.getBoundsInScreen(it) }
         if (!bounds.intersect(clip)) return
 
-        val text = if (node.isPassword) null else node.text?.toString()?.trim()
+        val raw = if (node.isPassword) null else node.text?.toString()
+        val text = raw?.trim()
         if (!text.isNullOrEmpty()) {
-            out.segments.add(Segment(text, bounds))
+            out.items.add(Item(text, raw, bounds, node))
             return
         }
 
-        val before = out.segments.size
+        val before = out.items.size
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
             collect(child, clip, out, minBlankArea, depth + 1)
         }
-        if (out.segments.size != before) return
+        if (out.items.size != before) return
 
         // Si ningún hijo aportó texto, usamos la descripción (p. ej. botones con icono o imágenes).
         val description = node.contentDescription?.toString()?.trim()
         if (!description.isNullOrEmpty()) {
-            out.segments.add(Segment(description, bounds))
+            out.items.add(Item(description, description, bounds, null))
         } else if (bounds.width().toLong() * bounds.height() >= minBlankArea) {
             out.blanks.add(bounds)
         }
@@ -93,26 +102,39 @@ object ScreenTextReader {
         return screen
     }
 
-    /** Texto del elemento tocado en (x, y), coordenadas de pantalla. */
-    fun textAt(service: AccessibilityService, x: Int, y: Int, tolerancePx: Int): List<Segment> {
+    /** Texto bajo el dedo en (x, y), según el modo de toque (frase, desde la frase o elemento completo). */
+    fun textAt(service: AccessibilityService, x: Int, y: Int, tolerancePx: Int, mode: String): List<Segment> {
         for (window in readableWindows(service)) {
             if (!window.bounds.contains(x, y)) continue
-            val items = collect(window, Long.MAX_VALUE).segments
-            val hit = items.filter { it.bounds!!.contains(x, y) }
-                .minByOrNull { it.bounds!!.width().toLong() * it.bounds.height() }
-            if (hit != null) return listOf(hit)
-
-            // Nada justo debajo del dedo: elegimos el elemento más cercano si está muy cerca.
-            val nearest = items.minByOrNull { distance(it.bounds!!, x, y) }
-            if (nearest != null && distance(nearest.bounds!!, x, y) <= tolerancePx) return listOf(nearest)
-            return emptyList()
+            val items = collect(window, Long.MAX_VALUE).items
+            val hit = items.filter { it.bounds.contains(x, y) }
+                .minByOrNull { it.bounds.width().toLong() * it.bounds.height() }
+                ?: items.minByOrNull { distance(it.bounds, x, y) }
+                    ?.takeIf { distance(it.bounds, x, y) <= tolerancePx }
+                ?: return emptyList()
+            return refineTap(hit, x, y, mode)
         }
         return emptyList()
     }
 
+    private fun refineTap(item: Item, x: Int, y: Int, mode: String): List<Segment> {
+        if (mode == Prefs.TAP_ELEMENT) return listOf(item.whole())
+        val pieces = TextSplit.sentences(item.raw)
+        if (pieces.size <= 1) return listOf(item.whole())
+        val boxes = charBoxes(item) ?: return listOf(item.whole())
+        val boundsOf = { s: Int, e: Int -> unionOf(boxes, s, e) }
+        val pieceBounds = pieces.map { boundsOf(it.start, it.end) }
+        var index = pieceBounds.indexOfFirst { it != null && it.contains(x, y) }
+        if (index < 0) {
+            index = pieceBounds.indices.minByOrNull { i -> pieceBounds[i]?.let { distance(it, x, y) } ?: Double.MAX_VALUE }
+                ?: return listOf(item.whole())
+        }
+        return TextSplit.pickForTap(pieces, index, mode, item.bounds, boundsOf)
+    }
+
     /**
-     * Texto de todos los elementos dentro de [area], en orden de lectura, y zonas grandes sin texto
-     * (de al menos [minBlankArea] px²) que se solapan con el área.
+     * Texto de todos los elementos dentro de [area], en orden de lectura (recortado a las frases que caen
+     * dentro cuando el elemento queda a medias), y zonas grandes sin texto (≥ [minBlankArea] px²).
      */
     fun scan(service: AccessibilityService, area: Rect, minBlankArea: Long): Scan {
         val windows = readableWindows(service)
@@ -124,8 +146,10 @@ object ScreenTextReader {
             if (Rect.intersects(window.bounds, area)) {
                 val collected = collect(window, minBlankArea)
                 fun visible(r: Rect) = higherWindows.none { it.contains(r.centerX(), r.centerY()) }
-                val items = collected.segments.filter { selected(it.bounds!!, area) && visible(it.bounds) }
-                if (items.isNotEmpty()) perWindow.add(window.bounds to items)
+                val segments = collected.items
+                    .filter { selected(it.bounds, area) && visible(it.bounds) }
+                    .flatMap { refineArea(it, area) }
+                if (segments.isNotEmpty()) perWindow.add(window.bounds to segments)
                 collected.blanks.filterTo(blanks) { Rect.intersects(it, area) && visible(it) }
             }
             higherWindows.add(window.bounds)
@@ -140,6 +164,53 @@ object ScreenTextReader {
             }
         }
         return Scan(result, blanks)
+    }
+
+    /** Si el elemento queda entero dentro del área se lee completo; si no, solo sus frases seleccionadas. */
+    private fun refineArea(item: Item, area: Rect): List<Segment> {
+        if (area.contains(item.bounds)) return listOf(item.whole())
+        val pieces = TextSplit.sentences(item.raw)
+        if (pieces.size <= 1) return listOf(item.whole())
+        val boxes = charBoxes(item) ?: return listOf(item.whole())
+        val chosen = pieces.mapNotNull { piece ->
+            val b = unionOf(boxes, piece.start, piece.end) ?: return@mapNotNull null
+            if (selected(b, area)) Segment(piece.text, b) else null
+        }
+        return chosen.ifEmpty { listOf(item.whole()) }
+    }
+
+    /** Posición en pantalla de cada carácter del elemento (si la app la ofrece). */
+    private fun charBoxes(item: Item): Array<RectF?>? {
+        val node = item.node ?: return null
+        val length = item.raw.length
+        if (length == 0 || length > MAX_CHAR_QUERY) return null
+        val key = AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY
+        if (node.availableExtraData?.contains(key) != true) return null
+        val args = Bundle().apply {
+            putInt(AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_START_INDEX, 0)
+            putInt(AccessibilityNodeInfo.EXTRA_DATA_TEXT_CHARACTER_LOCATION_ARG_LENGTH, length)
+        }
+        return try {
+            if (!node.refreshWithExtraData(key, args)) return null
+            @Suppress("DEPRECATION")
+            val array = node.extras.getParcelableArray(key) ?: return null
+            Array(array.size) { array[it] as? RectF }
+        } catch (e: RuntimeException) {
+            null
+        }
+    }
+
+    private fun unionOf(boxes: Array<RectF?>, start: Int, end: Int): Rect? {
+        val r = RectF()
+        var any = false
+        for (i in start until minOf(end, boxes.size)) {
+            val b = boxes[i] ?: continue
+            if (b.isEmpty) continue
+            if (any) r.union(b) else r.set(b)
+            any = true
+        }
+        if (!any) return null
+        return Rect(r.left.toInt(), r.top.toInt(), r.right.toInt(), r.bottom.toInt())
     }
 
     /**

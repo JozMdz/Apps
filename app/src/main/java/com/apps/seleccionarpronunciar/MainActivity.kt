@@ -1,6 +1,11 @@
 package com.apps.seleccionarpronunciar
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
+import android.bluetooth.BluetoothManager
+import android.content.pm.PackageManager
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
@@ -23,6 +28,10 @@ import android.widget.Toast
 
 class MainActivity : Activity() {
 
+    companion object {
+        private const val REQUEST_BLUETOOTH = 1
+    }
+
     private lateinit var statusText: TextView
     private lateinit var openSettings: Button
     private lateinit var rateLabel: TextView
@@ -31,6 +40,9 @@ class MainActivity : Activity() {
     private lateinit var pitchSeek: SeekBar
     private lateinit var highlightSwitch: Switch
     private lateinit var floatingSwitch: Switch
+    private lateinit var carAutoSwitch: Switch
+    private lateinit var carPick: Button
+    private var afterBluetoothPermission: (() -> Unit)? = null
     private lateinit var restrictedButton: Button
     private lateinit var restrictedHelp: TextView
 
@@ -78,6 +90,33 @@ class MainActivity : Activity() {
                 startActivity(Intent(Settings.ACTION_SETTINGS))
             }
         }
+
+        bindRadio(
+            R.id.tap_group, Prefs.tapMode(this),
+            mapOf(R.id.tap_sentence to Prefs.TAP_SENTENCE, R.id.tap_from to Prefs.TAP_FROM, R.id.tap_element to Prefs.TAP_ELEMENT),
+        ) { Prefs.setTapMode(this, it) }
+        bindRadio(
+            R.id.music_group, Prefs.musicMode(this),
+            mapOf(R.id.music_duck to Prefs.MUSIC_DUCK, R.id.music_pause to Prefs.MUSIC_PAUSE, R.id.music_none to Prefs.MUSIC_NONE),
+        ) { Prefs.setMusicMode(this, it) }
+        findViewById<Switch>(R.id.drag_rows_switch).apply {
+            isChecked = Prefs.dragRows(this@MainActivity)
+            setOnCheckedChangeListener { _, checked -> Prefs.setDragRows(this@MainActivity, checked) }
+        }
+
+        carAutoSwitch = findViewById(R.id.car_auto_switch)
+        carPick = findViewById(R.id.car_pick)
+        carAutoSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked && Prefs.carDevices(this).isEmpty()) {
+                carAutoSwitch.isChecked = false
+                withBluetoothPermission { pickCarDevices(enableAuto = true) }
+            } else if (checked) {
+                withBluetoothPermission { Prefs.setCarAuto(this, true) }
+            } else {
+                Prefs.setCarAuto(this, false)
+            }
+        }
+        carPick.setOnClickListener { withBluetoothPermission { pickCarDevices(enableAuto = false) } }
 
         val ocrGroup = findViewById<RadioGroup>(R.id.ocr_group)
         ocrGroup.check(
@@ -144,12 +183,82 @@ class MainActivity : Activity() {
         pitchLabel.text = getString(R.string.speech_pitch, pitch)
         highlightSwitch.isChecked = Prefs.highlight(this)
         floatingSwitch.isChecked = Prefs.floatingButton(this)
+        carAutoSwitch.isChecked = Prefs.carAuto(this)
+        updateCarPickLabel()
     }
 
     override fun onDestroy() {
         // Si el servicio no está activo, nadie más usa el motor de voz.
         if (isFinishing && SelectToSpeakService.instance == null) Speaker.shutdown()
         super.onDestroy()
+    }
+
+    private fun bindRadio(groupId: Int, current: String, values: Map<Int, String>, onChange: (String) -> Unit) {
+        val group = findViewById<RadioGroup>(groupId)
+        group.check(values.entries.firstOrNull { it.value == current }?.key ?: values.keys.first())
+        group.setOnCheckedChangeListener { _, id -> values[id]?.let(onChange) }
+    }
+
+    // ---------------------------------------------------------------- Bluetooth del carro
+
+    private fun withBluetoothPermission(action: () -> Unit) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        ) {
+            action()
+        } else {
+            afterBluetoothPermission = action
+            requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), REQUEST_BLUETOOTH)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != REQUEST_BLUETOOTH) return
+        val action = afterBluetoothPermission
+        afterBluetoothPermission = null
+        if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            action?.invoke()
+        } else {
+            Toast.makeText(this, R.string.car_permission_needed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun pickCarDevices(enableAuto: Boolean) {
+        val adapter = getSystemService(BluetoothManager::class.java)?.adapter
+        val bonded = try {
+            adapter?.bondedDevices?.toList().orEmpty()
+        } catch (e: SecurityException) {
+            emptyList()
+        }.sortedBy { it.name ?: it.address }
+        if (bonded.isEmpty()) {
+            Toast.makeText(this, R.string.car_none_paired, Toast.LENGTH_LONG).show()
+            return
+        }
+        val chosen = Prefs.carDevices(this).toMutableSet()
+        val names = bonded.map { it.name ?: it.address }.toTypedArray()
+        val checked = BooleanArray(bonded.size) { bonded[it].address in chosen }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.car_pick_title)
+            .setMultiChoiceItems(names, checked) { _, which, isChecked ->
+                if (isChecked) chosen.add(bonded[which].address) else chosen.remove(bonded[which].address)
+            }
+            .setPositiveButton(R.string.ok) { _, _ ->
+                Prefs.setCarDevices(this, chosen)
+                if (enableAuto && chosen.isNotEmpty()) {
+                    Prefs.setCarAuto(this, true)
+                    carAutoSwitch.isChecked = true
+                }
+                updateCarPickLabel()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun updateCarPickLabel() {
+        val count = Prefs.carDevices(this).size
+        carPick.text = if (count == 0) getString(R.string.car_pick) else getString(R.string.car_pick_count, count)
     }
 
     @TargetApi(Build.VERSION_CODES.TIRAMISU)

@@ -8,8 +8,16 @@ teléfono.
 
 - **Servicio de accesibilidad** con botón flotante (se puede arrastrar) y compatible con el botón /
   atajo de accesibilidad del sistema.
-- **Modo selección**: toca un elemento para leerlo, arrastra un recuadro para leer todo lo que hay
-  dentro, o pulsa **Leer todo** para leer la pantalla completa.
+- **Modo selección**, pensado para usar con una mano:
+  - Tocar un texto lee **solo esa frase**, **desde esa frase hasta el final** o **el mensaje completo**
+    (configurable).
+  - Deslizar el dedo selecciona **renglones completos** (o un recuadro, si se prefiere) y lee solo las
+    frases que caen dentro.
+  - **Leer todo** lee la pantalla completa.
+- **Modo manejo**: el botón se muestra y se oculta solo al conectar/desconectar el Bluetooth del carro.
+  También se oculta manteniéndolo pulsado o con el icono **Botón lectura** del panel.
+- **Música**: mientras lee, baja el volumen de Spotify (o lo pausa) y usa el canal de audio de
+  navegación, como el GPS, para oírse por el carro.
 - **Texto en imágenes y PDF (OCR)**: si no hay texto accesible (visores de PDF, fotos…) hace una
   captura y reconoce el texto en el propio teléfono, sin internet (Android 11+). Configurable:
   automático, siempre o nunca.
@@ -70,7 +78,9 @@ El APK queda en `app/build/outputs/apk/release/app-release.apk` (firmado con la 
 | `OcrReader.kt` | Reconocimiento de texto (ML Kit, en el dispositivo) sobre una captura de pantalla. |
 | `Speaker.kt` | Envoltorio de `TextToSpeech`: divide en frases, pausa/reanuda, salta y avisa de cambios. |
 | `OverlayViews.kt` | Vistas de selección (toque / arrastre) y de resaltado. |
-| `QuickTileService.kt` / `TileActionActivity.kt` | Icono del panel de Ajustes rápidos. |
+| `QuickTileService.kt` / `TileActionActivity.kt` | Icono «Pronunciar» del panel de Ajustes rápidos. |
+| `ButtonTileService.kt` | Icono «Botón lectura» del panel: muestra u oculta el botón flotante. |
+| `TextSplit.kt` | División en frases y elección de la frase tocada. |
 | `SpeakTextActivity.kt` | Acción "Pronunciar" del menú de texto y destino de Compartir. |
 | `MainActivity.kt` | Pantalla de ajustes e instrucciones. |
 

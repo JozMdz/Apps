@@ -16,11 +16,14 @@ import kotlin.math.min
 
 /**
  * Capa a pantalla completa que recoge un toque (leer un elemento) o un arrastre
- * (leer todo lo que quede dentro del recuadro). Trabaja en coordenadas de pantalla.
+ * (leer todo lo que quede dentro). Con [fullRows] el arrastre selecciona renglones completos
+ * (todo el ancho entre donde empieza y termina el dedo), más fácil con una mano.
+ * Trabaja en coordenadas de pantalla.
  */
 @SuppressLint("ViewConstructor")
 class SelectionView(
     context: Context,
+    private val fullRows: Boolean,
     private val onTap: (x: Int, y: Int) -> Unit,
     private val onArea: (area: Rect) -> Unit,
 ) : View(context) {
@@ -51,6 +54,10 @@ class SelectionView(
         val r = drawRect.apply {
             set(min(startX, curX), min(startY, curY), max(startX, curX), max(startY, curY))
             offset(-location[0].toFloat(), -location[1].toFloat())
+            if (fullRows) {
+                left = 0f
+                right = width.toFloat()
+            }
         }
         val radius = 8 * density
         canvas.drawRoundRect(r, radius, radius, fillPaint)
@@ -67,7 +74,7 @@ class SelectionView(
             }
             MotionEvent.ACTION_MOVE -> {
                 curX = event.rawX; curY = event.rawY
-                if (!dragging && (abs(curX - startX) > touchSlop || abs(curY - startY) > touchSlop)) {
+                if (!dragging && maxOf(abs(curX - startX), abs(curY - startY)) > touchSlop) {
                     dragging = true
                 }
                 if (dragging) invalidate()
@@ -75,12 +82,18 @@ class SelectionView(
             MotionEvent.ACTION_UP -> {
                 curX = event.rawX; curY = event.rawY
                 if (dragging) {
-                    onArea(
-                        Rect(
-                            min(startX, curX).toInt(), min(startY, curY).toInt(),
-                            max(startX, curX).toInt(), max(startY, curY).toInt(),
-                        )
+                    val area = Rect(
+                        min(startX, curX).toInt(), min(startY, curY).toInt(),
+                        max(startX, curX).toInt(), max(startY, curY).toInt(),
                     )
+                    if (fullRows) {
+                        getLocationOnScreen(location)
+                        area.left = location[0]
+                        area.right = location[0] + width
+                        // Un deslizamiento horizontal sobre un solo renglón selecciona ese renglón.
+                        if (area.height() < touchSlop * 2) area.inset(0, area.height() / 2 - touchSlop)
+                    }
+                    onArea(area)
                 } else {
                     onTap(startX.toInt(), startY.toInt())
                 }
