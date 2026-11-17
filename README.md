@@ -1,3 +1,44 @@
+# Apps de lectura en voz alta
+
+Dos apps Android independientes, pensadas para escuchar texto mientras se maneja:
+
+| App | Para qué | Carpeta | APK |
+| --- | --- | --- | --- |
+| **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
+| **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
+
+Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
+
+---
+
+# Estudio en audio
+
+Convierte un PDF o un archivo Markdown en un "audiolibro" navegable, usando la voz del teléfono
+(sin internet).
+
+- **Agregar documentos**: botón *Agregar PDF o Markdown*, o desde otra app (WhatsApp, Claude, Archivos)
+  con **Compartir** / **Abrir con** → Estudio en audio. También acepta texto compartido.
+- **Índice automático**: sale de los títulos del documento (`#` en Markdown; en PDF, de los marcadores
+  o del tamaño/negrita de la letra). Si no hay títulos, se divide en "Parte 1, 2, 3…".
+  Tocar un apartado empieza a leerlo.
+- **Recuerda dónde te quedaste** en cada documento; el botón **Continuar** retoma el último.
+- **Controles**: apartado anterior/siguiente, frase anterior/siguiente, pausa y velocidad.
+  Funcionan también desde la pantalla de bloqueo, la barra de avisos y los botones del volante,
+  el estéreo o los audífonos (siguiente/anterior = apartado).
+- **Audio como un reproductor**: pausa la música mientras lee, se pausa sola en llamadas e
+  indicaciones del GPS y continúa después; se detiene si se desconecta el Bluetooth del carro.
+- **Limpieza para escuchar**: quita símbolos de Markdown, direcciones web, bloques de código,
+  números de página y encabezados repetidos; une los renglones del PDF en frases completas.
+- **Sin permisos especiales**: solo pide (una vez) el de notificaciones para mostrar los controles.
+
+Limitaciones: los PDF escaneados (imagen sin texto) no se pueden leer; en PDF con columnas o tablas
+el orden puede salir mal. Markdown es lo más confiable.
+
+Pruebas: `./gradlew :lector:testDebugUnitTest` importa un PDF y un Markdown de ejemplo y recorre la
+app completa (biblioteca, reproductor, índice) en un Android simulado.
+
+---
+
 # Seleccionar para pronunciar
 
 App Android que funciona como **"Seleccionar para pronunciar"** (Select to Speak): toca un elemento o
@@ -31,8 +72,7 @@ teléfono.
 
 ## Instalar
 
-Cada push compila el APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
-Descarga `app-release.apk`, ábrelo en el teléfono y permite instalar desde esa fuente.
+Descarga `app-release.apk` de los Artifacts de GitHub Actions, ábrelo en el teléfono y permite instalar desde esa fuente.
 
 ### Si el teléfono bloquea la instalación ("datos sensibles")
 
@@ -64,10 +104,11 @@ Después:
 Requiere JDK 17 y el SDK de Android (o Android Studio):
 
 ```bash
-./gradlew assembleRelease
+./gradlew :app:assembleRelease :lector:assembleRelease
 ```
 
-El APK queda en `app/build/outputs/apk/release/app-release.apk` (firmado con la clave de depuración).
+Los APK quedan en `app/build/outputs/apk/release/` y `lector/build/outputs/apk/release/`
+(firmados con la clave de depuración).
 
 ## Estructura
 

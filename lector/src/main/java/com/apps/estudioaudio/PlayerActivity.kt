@@ -1,0 +1,201 @@
+package com.apps.estudioaudio
+
+import android.Manifest
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Typeface
+import android.os.Build
+import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ListView
+import android.widget.ProgressBar
+import android.widget.TextView
+import java.text.DecimalFormat
+
+/** Reproductor: índice de apartados arriba y controles grandes abajo. */
+class PlayerActivity : Activity(), Player.Listener {
+
+    companion object {
+        const val EXTRA_DOC_ID = "doc_id"
+        const val EXTRA_AUTO_PLAY = "auto_play"
+        const val EXTRA_FROM_START = "from_start"
+        private const val MENU_VOICE = 1
+        private const val MENU_CLOSE = 2
+    }
+
+    private lateinit var sections: ListView
+    private lateinit var nowSection: TextView
+    private lateinit var nowSentence: TextView
+    private lateinit var position: TextView
+    private lateinit var progress: ProgressBar
+    private lateinit var playPause: ImageButton
+    private lateinit var speed: Button
+    private var shownSection = -1
+    private var shownDoc: String? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_player)
+        actionBar?.setDisplayHomeAsUpEnabled(true)
+
+        sections = findViewById(R.id.sections)
+        nowSection = findViewById(R.id.now_section)
+        nowSentence = findViewById(R.id.now_sentence)
+        position = findViewById(R.id.position)
+        progress = findViewById(R.id.progress)
+        playPause = findViewById(R.id.play_pause)
+        speed = findViewById(R.id.speed)
+
+        sections.adapter = adapter
+        sections.setOnItemClickListener { _, _, index, _ -> Player.jumpToSection(index) }
+        playPause.setOnClickListener { Player.toggle() }
+        speed.setOnClickListener { Player.cycleRate() }
+        findViewById<View>(R.id.previous_section).setOnClickListener { Player.previousSection() }
+        findViewById<View>(R.id.next_section).setOnClickListener { Player.nextSection() }
+        findViewById<View>(R.id.previous_sentence).setOnClickListener { Player.previousSentence() }
+        findViewById<View>(R.id.next_sentence).setOnClickListener { Player.nextSentence() }
+
+        if (savedInstanceState == null) openFromIntent(intent)
+        requestNotificationPermission()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openFromIntent(intent)
+    }
+
+    private fun openFromIntent(intent: Intent) {
+        val id = intent.getStringExtra(EXTRA_DOC_ID) ?: Player.doc?.id ?: Library.lastDoc(this)
+        val autoPlay = intent.getBooleanExtra(EXTRA_AUTO_PLAY, false)
+        val fromStart = intent.getBooleanExtra(EXTRA_FROM_START, false)
+        // Para no reabrir ni reiniciar al girar la pantalla o volver del aviso.
+        intent.removeExtra(EXTRA_AUTO_PLAY)
+        intent.removeExtra(EXTRA_FROM_START)
+        if (id == null) {
+            finish()
+            return
+        }
+        val current = Player.doc
+        if (current != null && current.id == id && !fromStart) {
+            if (autoPlay) Player.play()
+            return
+        }
+        val doc = Library.load(this, id)
+        if (doc == null) {
+            finish()
+            return
+        }
+        Player.open(this, doc, Library.position(this, id), autoPlay)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Player.addListener(this)
+        onPlayerChanged()
+    }
+
+    override fun onPause() {
+        Player.removeListener(this)
+        super.onPause()
+    }
+
+    override fun onPlayerChanged() {
+        val doc = Player.doc
+        if (doc == null) {
+            finish()
+            return
+        }
+        if (shownDoc != doc.id) {
+            shownDoc = doc.id
+            shownSection = -1
+            title = doc.title
+            adapter.notifyDataSetChanged()
+        }
+        val index = Player.index
+        val sectionIndex = Player.section
+        val total = doc.sentences.size
+        val percent = if (total > 1) index * 100 / (total - 1) else 0
+
+        nowSection.text = doc.sections.getOrNull(sectionIndex)?.title ?: doc.title
+        nowSentence.text = doc.sentences.getOrNull(index).orEmpty()
+        position.text = getString(R.string.position, index + 1, total, percent)
+        progress.max = (total - 1).coerceAtLeast(1)
+        progress.progress = index
+        speed.text = DecimalFormat("0.0#").format(Player.rate) + "x"
+
+        val playing = Player.state == Player.State.PLAYING
+        playPause.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
+        playPause.contentDescription = getString(if (playing) R.string.pause else R.string.play)
+
+        if (sectionIndex != shownSection) {
+            shownSection = sectionIndex
+            adapter.notifyDataSetChanged()
+            // Deja el apartado actual a la vista, con uno antes para dar contexto.
+            sections.post { sections.smoothScrollToPositionFromTop((sectionIndex - 1).coerceAtLeast(0), 0, 200) }
+        }
+    }
+
+    private val adapter = object : BaseAdapter() {
+        override fun getCount() = Player.doc?.sections?.size ?: 0
+        override fun getItem(position: Int) = Player.doc?.sections?.getOrNull(position)
+        override fun getItemId(position: Int) = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = (convertView ?: layoutInflater.inflate(R.layout.row_section, parent, false)) as TextView
+            val section = Player.doc?.sections?.getOrNull(position) ?: return view
+            val current = position == shownSection
+            val density = resources.displayMetrics.density
+            val indent = (16 + (section.level - 1).coerceIn(0, 4) * 18) * density
+            view.setPaddingRelative(indent.toInt(), view.paddingTop, view.paddingEnd, view.paddingBottom)
+            view.text = if (current) "▶  ${section.title}" else section.title
+            view.setTypeface(null, if (current || section.level == 1) Typeface.BOLD else Typeface.NORMAL)
+            view.setBackgroundColor(if (current) getColor(R.color.current_row) else 0)
+            return view
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menu.add(0, MENU_VOICE, 0, R.string.voice_settings)
+        menu.add(0, MENU_CLOSE, 1, R.string.close)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> {
+            finish()
+            true
+        }
+        MENU_VOICE -> {
+            try {
+                startActivity(Intent("com.android.settings.TTS_SETTINGS"))
+            } catch (e: ActivityNotFoundException) {
+                // El teléfono no tiene esa pantalla.
+            }
+            true
+        }
+        MENU_CLOSE -> {
+            Player.close()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    /** Solo se pide una vez: sirve para ver los controles en la barra de avisos y la pantalla de bloqueo. */
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("avance", MODE_PRIVATE)
+        if (prefs.getBoolean("_aviso_pedido", false)) return
+        prefs.edit().putBoolean("_aviso_pedido", true).apply()
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+    }
+}

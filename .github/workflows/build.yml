@@ -20,11 +20,14 @@ jobs:
 
       # ubuntu-latest ya incluye el SDK de Android (ANDROID_HOME).
       - name: Compilar
-        run: ./gradlew --no-daemon assembleDebug assembleRelease
+        run: ./gradlew --no-daemon :app:assembleRelease :lector:assembleRelease
+
+      - name: Pruebas de Estudio en audio
+        run: ./gradlew --no-daemon :lector:testDebugUnitTest
 
       - uses: actions/upload-artifact@v4
         with:
-          name: seleccionar-para-pronunciar-apk
+          name: apks
           path: |
+            lector/build/outputs/apk/release/lector-release.apk
             app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/apk/debug/app-debug.apk

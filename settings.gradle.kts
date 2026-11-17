@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SeleccionarParaPronunciar"
 include(":app")
+include(":lector")

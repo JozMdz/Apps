@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Estudio en audio</string>
+    <string name="channel_name">Lectura en curso</string>
+
+    <string name="library_empty">Aún no hay documentos.\n\nAgrega un PDF o un archivo Markdown (.md) con el botón de abajo, o desde otra app (WhatsApp, Claude, Archivos) con «Compartir» o «Abrir con» → Estudio en audio.\n\nCada documento se convierte en audio con un índice de apartados, y la app recuerda dónde te quedaste.</string>
+    <string name="add_document">Agregar PDF o Markdown</string>
+    <string name="continue_last">Continuar: %1$s</string>
+    <string name="entry_progress">%1$d apartados · %2$d %% · vas en: %3$s</string>
+    <string name="entry_new">%1$d apartados · sin empezar</string>
+    <string name="importing">Preparando el documento…</string>
+    <string name="shared_text_title">Texto compartido</string>
+    <string name="delete">Eliminar</string>
+    <string name="restart">Empezar desde el principio</string>
+    <string name="cancel">Cancelar</string>
+    <string name="ok">Aceptar</string>
+
+    <string name="import_cannot_open">No se pudo abrir el archivo.</string>
+    <string name="import_too_big">El archivo es demasiado grande.</string>
+    <string name="import_protected">El PDF está protegido con contraseña.</string>
+    <string name="import_scanned">Este PDF no tiene texto: es una imagen escaneada. Por ahora solo se pueden leer PDF con texto.</string>
+    <string name="import_unsupported">Tipo de archivo no compatible. Usa PDF, Markdown (.md) o texto (.txt).</string>
+    <string name="import_empty">El documento no tiene texto para leer.</string>
+
+    <string name="position">Frase %1$d de %2$d · %3$d %%</string>
+    <string name="index_title">Índice</string>
+    <string name="finished">Fin del documento</string>
+    <string name="voice_unavailable">El motor de texto a voz no está disponible</string>
+    <string name="audio_busy">El audio está ocupado (¿una llamada?)</string>
+
+    <string name="play">Reproducir</string>
+    <string name="pause">Pausar</string>
+    <string name="previous_section">Apartado anterior</string>
+    <string name="next_section">Apartado siguiente</string>
+    <string name="previous_sentence">Frase anterior</string>
+    <string name="next_sentence">Frase siguiente</string>
+    <string name="speed">Velocidad</string>
+    <string name="close">Cerrar</string>
+    <string name="voice_settings">Ajustes de voz del teléfono</string>
+</resources>

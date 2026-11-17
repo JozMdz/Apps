@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#00796B</color>
+    <color name="primary_dark">#004D40</color>
+    <color name="accent">#00796B</color>
+    <color name="control">#546E7A</color>
+    <color name="current_row">#1A00796B</color>
+    <color name="panel">#F2F5F4</color>
+</resources>
