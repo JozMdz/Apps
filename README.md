@@ -1,10 +1,11 @@
-# Apps de lectura en voz alta
+# Apps de lectura
 
-Dos apps Android independientes, pensadas para escuchar texto mientras se maneja:
+Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV LG para aprender a leer:
 
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
+| **Leo y Juego** (TV LG) | App para niños de kínder: leer, inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.1.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -145,3 +146,105 @@ Los APK quedan en `app/build/outputs/apk/release/` y `lector/build/outputs/apk/r
   (apps de bancos, contenido con DRM).
 - Si el botón de accesibilidad del sistema está asignado a esta app, el botón flotante propio se oculta
   para no duplicarlo.
+
+---
+
+# Leo y Juego (TV LG webOS)
+
+App para la tele LG para que un niño de kínder (5 años) aprenda jugando: leer, inglés, números,
+música y unos minijuegos de premio que papá o mamá autorizan con un PIN. Se juega con el control
+remoto (flechas + OK, o el puntero del Magic Remote) o con el celular escaneando un QR. Las voces
+(español de México e inglés) y los dibujos vienen dentro de la app.
+
+## Qué trae
+
+Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben de nivel solos
+(3 niveles). Con 3 estrellas o más se gana una estampa para el álbum.
+
+| Sección | Juegos |
+| --- | --- |
+| **Leer** | **Letras** (ve la letra y busca el dibujo que empieza con ella) · **Escucha** (oye una sílaba y la busca) · **Sílabas** (completa la palabra) · **Palabras** (lee y busca el dibujo, sin ayuda de voz) · **Arma** (forma la palabra con sílabas) · **Mi nombre** (arma su nombre letra por letra; papá o mamá lo escriben la primera vez) |
+| **Inglés** | **Words** (oye la palabra en inglés y busca el dibujo: animales, comida, cosas) · **Colors** · **Numbers** (1 al 10). Al acertar oye la palabra en inglés y en español. |
+| **Números** | **Cuenta** (¿cuántos hay?) · **Números** (oye el número y lo busca, hasta 20) · **Sumas** (con dibujos y luego solo números) · **Más o menos** |
+| **Música** | **Batería** (6 tambores) · **Teclado** (do-re-mi, con la canción *Estrellita* guiada) · **Guitarra** (6 acordes). Se toca con OK, con los números 1-8 del control o desde el celular. |
+| **Juegos** 🔒 | **Salta** (el caballito brinca nopales y piedras, estilo circo) · **Atrapa** (la canasta atrapa fruta) · **Memoria** (parejas). Piden el **PIN** y cuánto tiempo (5, 10, 15 o 30 min); al acabarse el tiempo regresan solos al inicio. |
+
+- **Para papás** (también con PIN): minúsculas o MAYÚSCULAS, voz, nivel, nombre del niño, cambiar
+  el PIN y borrar el progreso. Si se olvida el PIN: pulsar seguidos los botones **rojo, verde,
+  amarillo y azul** del control.
+- **Jugar con el celular** (como los juegos de Netflix): en el inicio aparece un QR; al escanearlo,
+  el celular muestra los botones de la pantalla (dibujos, sílabas, tambores, teclas, el botón de
+  saltar, el PIN…) para tocarlos. Usa el servidor gratuito de [PeerJS](https://peerjs.com/) solo para
+  que el celular encuentre a la TV; después se hablan directo por el Wi‑Fi. Necesita internet y que la
+  página esté publicada en GitHub Pages (paso 1 abajo).
+- **Pensado para kínder 3 (SEP)**: empieza con vocales y las sílabas de m, p, s, l; letra script.
+
+## Cómo instalarla — paso a paso
+
+### Paso 1. Publicar la app con GitHub Actions (una sola vez)
+
+El archivo `.github/workflows/tv.yml` hace dos cosas cada vez que cambia algo en `tv-lectura/`:
+crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
+
+1. En GitHub, abre el repositorio **JozMdz/Apps** → pestaña **Pull requests** → **New pull request**.
+   Elige *base*: la rama principal (`claude/jolly-knuth-qcyc82`) y *compare*:
+   `claude/lg-tv-educational-app-um2xig` → **Create pull request** → **Merge pull request**.
+2. Ve a **Settings → Pages**. En *Build and deployment → Source* elige **GitHub Actions**.
+3. Ve a la pestaña **Actions** → a la izquierda **App para TV LG (Leo y Juego)** → botón
+   **Run workflow** (rama principal) → **Run workflow**. Espera la palomita verde (1-2 minutos).
+4. Listo: la app queda en **https://jozmdz.github.io/Apps/** y el control del celular en
+   `https://jozmdz.github.io/Apps/control.html` (al que lleva el QR).
+
+### Paso 2, opción A. Abrirla en el navegador de la TV (lo más fácil, sin computadora)
+
+1. En la TV abre **Navegador web** (el globo en la barra de apps).
+2. Escribe `jozmdz.github.io/Apps` y entra.
+3. Agrégala a favoritos (o en el menú del navegador, *Agregar a la página de inicio*) para abrirla
+   rápido la próxima vez.
+4. Si no se oye la voz al principio, pulsa **OK** una vez (el navegador pide un toque antes de sonar).
+
+### Paso 2, opción B. Instalarla como app con su propio ícono (necesita una computadora)
+
+1. **En la TV**: abre la LG Content Store, busca e instala **Developer Mode**. Ábrela e inicia sesión
+   con una cuenta gratuita de [LG Developer](https://webostv.developer.lge.com/) (se crea en la página).
+2. Activa **Dev Mode Status** (la TV se reinicia) y luego **Key Server**. Anota la **IP** que aparece.
+3. **En la computadora** (misma red Wi‑Fi), con [Node.js](https://nodejs.org) instalado, abre una
+   terminal y escribe:
+   ```
+   npm install -g @webos-tools/cli
+   ares-setup-device
+   ```
+   Elige *add*, nombre `tv`, la IP de la TV, puerto `9922`, usuario `prisoner`, sin contraseña.
+4. Conéctate: `ares-novacom --device tv --getkey` y escribe la **frase** (*passphrase*) que muestra
+   la app Developer Mode.
+5. Descarga el instalador: en GitHub → **Actions** → la última ejecución verde de
+   **App para TV LG** → abajo, en **Artifacts**, **leo-y-juego-ipk** (llega en un .zip; descomprímelo).
+6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.1.0_all.ipk`.
+   Aparece **Leo y Juego** en la barra de apps de la TV.
+7. El modo desarrollador dura **50 horas**: abre la app *Developer Mode* de vez en cuando y pulsa
+   **Extend** (si caduca, la app se borra y hay que repetir el paso 6).
+
+### Paso 3. Primera vez que se usa
+
+1. Entra a **Papás** → te pedirá **crear un PIN** de 4 números (lo escribes dos veces).
+2. Ahí mismo, **Nombre** → escribe el nombre del niño (para el juego *Mi nombre*).
+3. Para jugar con el celular: en el inicio escanea el **QR** con la cámara del celular.
+
+## Agregar palabras o cambiar las voces
+
+Las palabras están en `tv-lectura/herramientas/palabras.txt` (`palabra | sí-la-bas | emoji | inglés | grupo`).
+Después de editarlo hay que volver a generar dibujos y voces:
+
+```
+pip install piper-tts                      # y tener ffmpeg
+npm pack @twemoji/svg && tar xzf twemoji-svg-*.tgz      # dibujos en ./package
+# Voz: es_MX-claude-high (.onnx y .onnx.json) de los modelos de Piper
+# Inglés: en_US-amy-medium (.onnx y .onnx.json)
+python3 tv-lectura/herramientas/generar.py --twemoji package --voz es_MX-claude-high.onnx --voz-en en_US-amy-medium.onnx
+```
+
+Para probarla en la computadora: `cd tv-lectura && python3 -m http.server` y abrir
+`http://localhost:8000` (las flechas, Enter y Esc hacen de control remoto).
+
+Créditos: conexión con [PeerJS](https://peerjs.com/) (MIT), QR con [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letra
+[Andika](https://software.sil.org/andika/) (SIL OFL), voces [Piper](https://github.com/rhasspy/piper) es_MX "claude" y en_US "amy". Los sonidos de los instrumentos se generan en la TV (Web Audio).
