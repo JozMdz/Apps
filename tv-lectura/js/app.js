@@ -171,8 +171,8 @@
   var TECLAS = {};   // teclas propias de una pantalla: TECLAS[id](codigo) devuelve true si la usó
   var ATRAS = {};    // a dónde regresa cada pantalla
   var colores = '';
-  document.addEventListener('keydown', function (ev) {
-    var k = ev.keyCode;
+  // Atiende una tecla del control remoto (o del celular). Devuelve true si la usó.
+  function tecla(k) {
     var manejada = true;
     avisoSonido(false);
     // Botones de colores rojo, verde, amarillo, azul seguidos: borra el PIN olvidado.
@@ -180,7 +180,7 @@
       colores = (colores + (k - 403)).slice(-4);
       if (colores === '0123') { EST.pin = null; guardar(); colores = ''; }
     } else colores = '';
-    if (pantalla && TECLAS[pantalla.id] && TECLAS[pantalla.id](k)) { ev.preventDefault(); return; }
+    if (pantalla && TECLAS[pantalla.id] && TECLAS[pantalla.id](k)) return true;
     if (k === 37) mover(-1, 0);
     else if (k === 39) mover(1, 0);
     else if (k === 38) mover(0, -1);
@@ -189,7 +189,10 @@
     else if (k === 461 || k === 27 || k === 8 || k === 10009) atras();
     else if (k === 403 || k === 415) repetir();       // botón rojo o Play: repetir voz
     else manejada = false;
-    if (manejada) ev.preventDefault();
+    return manejada;
+  }
+  document.addEventListener('keydown', function (ev) {
+    if (tecla(ev.keyCode)) ev.preventDefault();
   });
 
   function prepararFoco(e, alElegir, alEnfocar) {
@@ -765,7 +768,7 @@
     pantalla: function () { return pantalla; },
     enfocado: function () { return enfocado; },
     elegir: function (e) { enfocar(e, true); activar(e); },
-    mover: mover, atras: atras, repetir: repetir,
+    mover: mover, atras: atras, repetir: repetir, tecla: tecla,
     // Para los demás módulos (extra.js, papas.js, musica.js, mini.js)
     $: $, el: el, azar: azar, mezclar: mezclar, escoger: escoger, contiene: contiene, clave: clave, txt: txt,
     D: D, P: P, EST: EST, guardar: guardar, nivelDe: nivelDe,

@@ -80,7 +80,6 @@
 
   /* ================= SALTA ================= */
   var salta = L.pantallaNueva('salta', 'Salta');
-  salta.raiz.setAttribute('data-cel', 'c1');
   var hudSalta = marcador(salta);
   var pista = el('div', 'pista');
   var caballo = imagen('_corre', 'caballo');
@@ -167,7 +166,6 @@
 
   /* ================= ATRAPA ================= */
   var atrapa = L.pantallaNueva('atrapa', 'Atrapa');
-  atrapa.raiz.setAttribute('data-cel', 'c2g');
   var hudAtrapa = marcador(atrapa);
   var campo = el('div', 'pista campo');
   var canasta = imagen('_canasta', 'canasta');
@@ -244,7 +242,6 @@
 
   /* ================= MEMORIA ================= */
   var memoria = L.pantallaNueva('memoria', 'Memoria');
-  memoria.raiz.setAttribute('data-cel', 'c3');
   var mesa = el('div', 'mesa');
   memoria.cuerpo.appendChild(mesa);
   var M = null;

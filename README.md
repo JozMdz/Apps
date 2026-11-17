@@ -5,7 +5,7 @@ Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV L
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
-| **Leo y Juego** (TV LG) | App para niños de kínder: leer, inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.1.0_all.ipk` |
+| **Leo y Juego** (TV LG) | App para niños de kínder: leer, inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.2.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -173,10 +173,12 @@ Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben
   el PIN y borrar el progreso. Si se olvida el PIN: pulsar seguidos los botones **rojo, verde,
   amarillo y azul** del control.
 - **Jugar con el celular** (como los juegos de Netflix): en el inicio aparece un QR; al escanearlo,
-  el celular muestra los botones de la pantalla (dibujos, sílabas, tambores, teclas, el botón de
-  saltar, el PIN…) para tocarlos. Usa el servidor gratuito de [PeerJS](https://peerjs.com/) solo para
-  que el celular encuentre a la TV; después se hablan directo por el Wi‑Fi. Necesita internet y que la
-  página esté publicada en GitHub Pages (paso 1 abajo).
+  el celular se vuelve un **control remoto** con dos modos:
+  - **Flechas**: cruceta y OK como el control de la tele (dejar presionada una flecha la repite).
+  - **Puntero**: deslizar el dedo mueve una flecha en la TV, como el Magic Remote; un toque elige.
+  Arriba tiene *Atrás* y *Escuchar otra vez*. Usa el servidor gratuito de [PeerJS](https://peerjs.com/)
+  solo para que el celular encuentre a la TV; después se hablan directo por el Wi‑Fi. Necesita internet
+  y que la página esté publicada en GitHub Pages (paso 1 abajo).
 - **Pensado para kínder 3 (SEP)**: empieza con vocales y las sílabas de m, p, s, l; letra script.
 
 ## Cómo instalarla — paso a paso
@@ -219,7 +221,7 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
    la app Developer Mode.
 5. Descarga el instalador: en GitHub → **Actions** → la última ejecución verde de
    **App para TV LG** → abajo, en **Artifacts**, **leo-y-juego-ipk** (llega en un .zip; descomprímelo).
-6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.1.0_all.ipk`.
+6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.2.0_all.ipk`.
    Aparece **Leo y Juego** en la barra de apps de la TV.
 7. El modo desarrollador dura **50 horas**: abre la app *Developer Mode* de vez en cuando y pulsa
    **Extend** (si caduca, la app se borra y hay que repetir el paso 6).
@@ -228,7 +230,8 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
 
 1. Entra a **Papás** → te pedirá **crear un PIN** de 4 números (lo escribes dos veces).
 2. Ahí mismo, **Nombre** → escribe el nombre del niño (para el juego *Mi nombre*).
-3. Para jugar con el celular: en el inicio escanea el **QR** con la cámara del celular.
+3. Para jugar con el celular: en el inicio escanea el **QR** con la cámara del celular y elige
+   *Flechas* o *Puntero* (el celular recuerda el modo).
 
 ## Agregar palabras o cambiar las voces
 
