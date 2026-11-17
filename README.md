@@ -26,6 +26,9 @@ Convierte un PDF o un archivo Markdown en un "audiolibro" navegable, usando la v
   hasta el título.
 - **Vista de texto tipo letra de canción**: se ve el documento completo con la frase que se está
   leyendo resaltada y centrada; tocar cualquier frase salta a ella. El índice queda en otra pestaña.
+- **Repetir para repasar**: el botón *Repetir* repite con un toque el fragmento actual (el punto del
+  índice en que se está), con otro el apartado completo y con otro se apaga. Para un tramo a la
+  medida: mantener pulsada la frase inicial y luego la final.
 - **Recuerda dónde te quedaste** en cada documento; el botón **Continuar** retoma el último.
 - **Controles**: apartado anterior/siguiente, frase anterior/siguiente, pausa y velocidad.
   Funcionan también desde la pantalla de bloqueo, la barra de avisos y los botones del volante,

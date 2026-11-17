@@ -20,6 +20,9 @@ object Player {
 
     enum class State { IDLE, PLAYING, PAUSED }
 
+    /** Qué se repite: nada, el fragmento actual del índice, el apartado completo o un tramo elegido. */
+    enum class Loop { OFF, FRAGMENT, SECTION, CUSTOM }
+
     fun interface Listener {
         fun onPlayerChanged()
     }
@@ -47,6 +50,15 @@ object Player {
 
     val section: Int get() = doc?.sectionAt(index) ?: 0
 
+    var loop = Loop.OFF
+        private set
+
+    /** Primera y última frase del tramo que se repite (solo válidas si [loop] no es OFF). */
+    var loopStart = 0
+        private set
+    var loopEnd = 0
+        private set
+
     fun addListener(listener: Listener) = listeners.add(listener)
     fun removeListener(listener: Listener) = listeners.remove(listener)
 
@@ -58,6 +70,7 @@ object Player {
         rate = Library.rate(ctx)
         cancelSpeech()
         doc = document
+        loop = Loop.OFF
         // Si se había terminado, se empieza de nuevo.
         index = if (startAt in 0 until document.sentences.size - 1) startAt else 0
         state = State.PAUSED
@@ -141,8 +154,67 @@ object Player {
     private fun moveTo(target: Int, announceSection: Boolean) {
         val d = doc ?: return
         index = target.coerceIn(0, d.sentences.lastIndex)
+        followLoop()
         save()
         if (state == State.PLAYING) speakCurrent(announceSection) else notifyListeners()
+    }
+
+    // ---------------------------------------------------------------- repetir
+
+    /** Un toque: repetir el fragmento actual; otro: el apartado completo; otro: dejar de repetir. */
+    fun cycleLoop() {
+        doc ?: return
+        loop = when (loop) {
+            Loop.OFF -> Loop.FRAGMENT
+            Loop.FRAGMENT -> Loop.SECTION
+            Loop.SECTION, Loop.CUSTOM -> Loop.OFF
+        }
+        // Si el fragmento ya es todo el apartado, "apartado" no aportaría nada distinto.
+        if (loop == Loop.SECTION && rangeFor(Loop.FRAGMENT) == rangeFor(Loop.SECTION)) loop = Loop.OFF
+        applyLoopRange()
+        notifyListeners()
+    }
+
+    /** Repite de la frase [from] a la [to] (en cualquier orden) y empieza a leer el tramo. */
+    fun setCustomLoop(from: Int, to: Int) {
+        val d = doc ?: return
+        loopStart = minOf(from, to).coerceIn(0, d.sentences.lastIndex)
+        loopEnd = maxOf(from, to).coerceIn(0, d.sentences.lastIndex)
+        loop = Loop.CUSTOM
+        jumpToSentence(loopStart)
+    }
+
+    fun clearLoop() {
+        if (loop == Loop.OFF) return
+        loop = Loop.OFF
+        notifyListeners()
+    }
+
+    private fun rangeFor(mode: Loop): Pair<Int, Int> {
+        val d = doc ?: return 0 to 0
+        var first = d.sectionAt(index)
+        var next = first + 1
+        if (mode == Loop.SECTION) {
+            while (first > 0 && d.sections[first].mark) first--
+            while (next < d.sections.size && d.sections[next].mark) next++
+        }
+        val start = d.sections.getOrNull(first)?.start ?: 0
+        val end = (d.sections.getOrNull(next)?.start ?: d.sentences.size) - 1
+        return start to end
+    }
+
+    private fun applyLoopRange() {
+        if (loop == Loop.FRAGMENT || loop == Loop.SECTION) {
+            val (start, end) = rangeFor(loop)
+            loopStart = start
+            loopEnd = end
+        }
+    }
+
+    /** Al moverse fuera del tramo: el de fragmento/apartado sigue a la nueva posición; el elegido se apaga. */
+    private fun followLoop() {
+        if (loop == Loop.OFF || index in loopStart..loopEnd) return
+        if (loop == Loop.CUSTOM) loop = Loop.OFF else applyLoopRange()
     }
 
     fun cycleRate() {
@@ -185,13 +257,22 @@ object Player {
         } else {
             sentence
         }
-        voice.speak(text, id, rate, pauseAfterMs = if (isHeading) 450 else 0)
+        val pause = when {
+            loop != Loop.OFF && index == loopEnd -> 900L // respiro antes de repetir el tramo
+            isHeading -> 450L
+            else -> 0L
+        }
+        voice.speak(text, id, rate, pauseAfterMs = pause)
     }
 
     private fun onSentenceFinished(id: String) {
         if (id != currentId || state != State.PLAYING) return
         val d = doc ?: return
-        if (index < d.sentences.lastIndex) {
+        if (loop != Loop.OFF && index == loopEnd) {
+            // Fin del tramo que se repasa: vuelve a su inicio.
+            index = loopStart
+            speakCurrent(announceSection = false)
+        } else if (index < d.sentences.lastIndex) {
             index++
             speakCurrent(announceSection = false)
         } else {

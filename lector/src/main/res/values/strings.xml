@@ -36,6 +36,11 @@
     <string name="previous_sentence">Frase anterior</string>
     <string name="next_sentence">Frase siguiente</string>
     <string name="speed">Velocidad</string>
+    <string name="loop_off">Repetir</string>
+    <string name="loop_fragment">Repitiendo: fragmento</string>
+    <string name="loop_section">Repitiendo: apartado</string>
+    <string name="loop_custom">Repitiendo: selección</string>
+    <string name="loop_mark_start">Inicio marcado. Ahora mantén pulsada la frase final.</string>
     <string name="close">Cerrar</string>
     <string name="voice_settings">Ajustes de voz del teléfono</string>
 </resources>

@@ -6,4 +6,6 @@
     <color name="panel">#1E2423</color>
     <color name="text">#FFFFFFFF</color>
     <color name="tab_idle">#B3FFFFFF</color>
+    <color name="loop_row">#2EFFB300</color>
+    <color name="loop_on">#FFB74D</color>
 </resources>

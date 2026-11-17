@@ -173,6 +173,54 @@ class AppSmokeTest {
         idle()
         screenshot(player.window.decorView, "2c-indice")
 
+        // --- Repetir: un toque repite el fragmento actual; otro, el apartado; otro, apaga.
+        player.findViewById<View>(R.id.tab_text).performClick()
+        val loopButton = player.findViewById<Button>(R.id.loop)
+        Player.jumpToSection(mark)
+        Player.pause()
+        loopButton.performClick()
+        assertEquals(Player.Loop.FRAGMENT, Player.loop)
+        assertEquals(pdf.sections[mark].start, Player.loopStart)
+        assertEquals(pdf.sections[mark + 1].start - 1, Player.loopEnd)
+        assertEquals("Repitiendo: fragmento", loopButton.text.toString())
+        // Al terminar la última frase del fragmento vuelve a su inicio en vez de seguir.
+        Player.jumpToSentence(Player.loopEnd)
+        stepUntil { Player.index != Player.loopEnd }
+        assertEquals(Player.loopStart, Player.index)
+        assertEquals(Player.State.PLAYING, Player.state)
+        Player.pause()
+        idle()
+        screenshot(player.window.decorView, "2d-repetir")
+        loopButton.performClick()
+        assertEquals(Player.Loop.SECTION, Player.loop)
+        val first = pdf.sections.indexOfFirst { it.title == "1. El Sol y los planetas interiores" }
+        assertEquals(pdf.sections[first].start, Player.loopStart)
+        assertEquals(pdf.sections[second].start - 1, Player.loopEnd)
+        // Moverse a otro apartado: la repetición sigue a la nueva posición.
+        Player.jumpToSection(second)
+        Player.pause()
+        assertEquals(pdf.sections[second].start, Player.loopStart)
+        loopButton.performClick()
+        assertEquals(Player.Loop.OFF, Player.loop)
+        assertEquals("Repetir", loopButton.text.toString())
+        // Tramo a la medida: mantener pulsada la frase inicial y luego la final.
+        text.onItemLongClickListener.onItemLongClick(text, null, 12, 12)
+        assertEquals(Player.Loop.OFF, Player.loop)
+        text.onItemLongClickListener.onItemLongClick(text, null, 10, 10)
+        assertEquals(Player.Loop.CUSTOM, Player.loop)
+        assertEquals(10, Player.loopStart)
+        assertEquals(12, Player.loopEnd)
+        assertEquals(10, Player.index)
+        stepUntil { Player.index == 12 }
+        stepUntil { Player.index != 12 }
+        assertEquals(10, Player.index)
+        Player.pause()
+        idle()
+        // Salir del tramo elegido lo apaga.
+        Player.jumpToSection(second)
+        Player.pause()
+        assertEquals(Player.Loop.OFF, Player.loop)
+
         // Tocar un apartado del índice salta a él y lee.
         sections.performItemClick(sections.adapter.getView(1, null, sections), 1, 1)
         assertEquals(Player.State.PLAYING, Player.state)

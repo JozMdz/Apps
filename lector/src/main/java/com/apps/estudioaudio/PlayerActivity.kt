@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
@@ -21,6 +22,7 @@ import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import java.text.DecimalFormat
 
 /** Reproductor: índice de apartados arriba y controles grandes abajo. */
@@ -52,6 +54,10 @@ class PlayerActivity : Activity(), Player.Listener {
     private lateinit var progress: ProgressBar
     private lateinit var playPause: ImageButton
     private lateinit var speed: Button
+    private lateinit var loop: Button
+    /** Frase marcada como inicio de un tramo a repetir (falta marcar el final). */
+    private var loopAnchor = -1
+    private var shownLoop = ""
     private var shownSection = -1
     private var shownDoc: String? = null
 
@@ -82,6 +88,20 @@ class PlayerActivity : Activity(), Player.Listener {
             touchedAt = NEVER
             Player.jumpToSentence(index)
         }
+        // Tramo a la medida: mantener pulsada la primera frase y luego la última.
+        text.setOnItemLongClickListener { _, _, index, _ ->
+            if (loopAnchor < 0) {
+                loopAnchor = index
+                Toast.makeText(this, R.string.loop_mark_start, Toast.LENGTH_LONG).show()
+                textAdapter.notifyDataSetChanged()
+            } else {
+                val from = loopAnchor
+                loopAnchor = -1
+                touchedAt = NEVER
+                Player.setCustomLoop(from, index)
+            }
+            true
+        }
         text.setOnScrollListener(object : AbsListView.OnScrollListener {
             override fun onScrollStateChanged(view: AbsListView, state: Int) {
                 if (state == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) touchedAt = SystemClock.elapsedRealtime()
@@ -94,6 +114,11 @@ class PlayerActivity : Activity(), Player.Listener {
         showTab(getSharedPreferences("avance", MODE_PRIVATE).getBoolean("_vista_texto", true), remember = false)
         playPause.setOnClickListener { Player.toggle() }
         speed.setOnClickListener { Player.cycleRate() }
+        loop = findViewById(R.id.loop)
+        loop.setOnClickListener {
+            loopAnchor = -1
+            Player.cycleLoop()
+        }
         findViewById<View>(R.id.previous_section).setOnClickListener { Player.previousSection() }
         findViewById<View>(R.id.next_section).setOnClickListener { Player.nextSection() }
         findViewById<View>(R.id.previous_sentence).setOnClickListener { Player.previousSentence() }
@@ -174,6 +199,26 @@ class PlayerActivity : Activity(), Player.Listener {
         progress.progress = index
         speed.text = DecimalFormat("0.0#").format(Player.rate) + "x"
 
+        val looping = Player.loop != Player.Loop.OFF
+        loop.setText(
+            when (Player.loop) {
+                Player.Loop.OFF -> R.string.loop_off
+                Player.Loop.FRAGMENT -> R.string.loop_fragment
+                Player.Loop.SECTION -> R.string.loop_section
+                Player.Loop.CUSTOM -> R.string.loop_custom
+            }
+        )
+        val loopColor = getColor(if (looping) R.color.loop_on else R.color.tab_idle)
+        loop.setTextColor(loopColor)
+        loop.compoundDrawableTintList = ColorStateList.valueOf(loopColor)
+        loop.setTypeface(null, if (looping) Typeface.BOLD else Typeface.NORMAL)
+        // El tramo que se repite se pinta en el texto; se redibuja cuando cambia.
+        val loopKey = if (looping) "${Player.loopStart}-${Player.loopEnd}" else ""
+        if (loopKey != shownLoop) {
+            shownLoop = loopKey
+            textAdapter.notifyDataSetChanged()
+        }
+
         val playing = Player.state == Player.State.PLAYING
         playPause.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
         playPause.contentDescription = getString(if (playing) R.string.pause else R.string.play)
@@ -226,6 +271,9 @@ class PlayerActivity : Activity(), Player.Listener {
         }
     }
 
+    private fun inLoopRange(position: Int) =
+        Player.loop != Player.Loop.OFF && position in Player.loopStart..Player.loopEnd
+
     private val textAdapter = object : BaseAdapter() {
         override fun getCount() = Player.doc?.sentences?.size ?: 0
         override fun getItem(position: Int) = Player.doc?.sentences?.getOrNull(position)
@@ -239,11 +287,19 @@ class PlayerActivity : Activity(), Player.Listener {
             val density = resources.displayMetrics.density
             view.text = sentence
             // La frase que se está leyendo resalta; el resto queda atenuado, como la letra de una canción.
-            view.alpha = if (current) 1f else 0.5f
+            view.alpha = if (current) 1f else if (inLoopRange(position)) 0.8f else 0.5f
             view.setTypeface(null, if (current || level > 0) Typeface.BOLD else Typeface.NORMAL)
             view.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (level == 1) 22f else if (level > 1) 20f else 19f)
             view.setTextColor(getColor(if (level > 0) R.color.accent else R.color.text))
-            view.setBackgroundColor(if (current) getColor(R.color.current_row) else 0)
+            val inLoop = (Player.loop != Player.Loop.OFF && position in Player.loopStart..Player.loopEnd) ||
+                position == loopAnchor
+            view.setBackgroundColor(
+                when {
+                    current -> getColor(R.color.current_row)
+                    inLoop -> getColor(R.color.loop_row)
+                    else -> 0
+                }
+            )
             // Aire antes de cada título para que se distinga dónde empieza un apartado.
             val top = if (level > 0 && position > 0) 26 else 9
             view.setPaddingRelative(view.paddingStart, (top * density).toInt(), view.paddingEnd, view.paddingBottom)
