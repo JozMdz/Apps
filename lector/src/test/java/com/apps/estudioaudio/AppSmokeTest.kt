@@ -254,14 +254,19 @@ class AppSmokeTest {
         val intent = Intent(Intent.ACTION_SEND).setType("text/plain")
             .putExtra(Intent.EXTRA_TEXT, "# Notas rápidas\n\nPrimera idea importante del día. Segunda idea importante del día.")
         val library = Robolectric.buildActivity(LibraryActivity::class.java, intent).setup().get()
+        // Importer guarda el documento en un hilo de fondo y después publica en el hilo
+        // principal la llamada que abre PlayerActivity, así que la biblioteca puede tener
+        // ya la entrada antes de que se haya lanzado la actividad: hay que esperar a ésta.
+        val app = context as Application
         val deadline = System.currentTimeMillis() + 10_000
-        while (Library.entries(context).isEmpty() && System.currentTimeMillis() < deadline) {
+        var next: Intent? = null
+        while (next == null && System.currentTimeMillis() < deadline) {
             Thread.sleep(50)
             idle()
+            next = shadowOf(app).nextStartedActivity
         }
-        idle()
         assertEquals(listOf("Notas rápidas"), Library.entries(context).map { it.title })
-        val started = shadowOf(context as Application).nextStartedActivity
+        val started: Intent = checkNotNull(next) { "PlayerActivity no se lanzó en 10 s tras compartir el texto" }
         assertEquals(PlayerActivity::class.java.name, started.component?.className)
         assertTrue(!library.isFinishing)
     }
