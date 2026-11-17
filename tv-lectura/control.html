@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#4fc3f7">
+<title>Leo y Juego · Control</title>
+<style>
+  @font-face { font-family: "Andika"; font-weight: 700; src: url("fuentes/andika-latin-700-normal.woff2") format("woff2"); }
+  :root { --foco: #ffd600; --tinta: #263238; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Andika", sans-serif; font-weight: 700; color: var(--tinta);
+    background: linear-gradient(180deg, #4fc3f7, #b3e5fc 75%, #81c784 75%) fixed;
+    display: flex; flex-direction: column; user-select: none; -webkit-user-select: none;
+    touch-action: manipulation; overscroll-behavior: none;
+  }
+  header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+  header button { width: 64px; height: 64px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.15); }
+  header button img, header button svg { width: 36px; height: 36px; vertical-align: middle; }
+  header button.invisible { visibility: hidden; }
+  #estado { color: #fff; font-size: 20px; text-shadow: 0 2px 3px rgba(0,0,0,.3); text-align: center; flex: 1; padding: 0 8px; }
+  main { flex: 1; overflow-y: auto; padding: 8px 16px 24px; display: flex; flex-direction: column; }
+  #botones { margin: auto 0; }
+  html, body { height: 100%; overflow: hidden; }
+  #botones { display: grid; grid-template-columns: 1fr 1fr; grid-gap: 16px; }
+  #botones.lista { grid-template-columns: 1fr; grid-gap: 12px; }
+  #botones.album { grid-template-columns: repeat(4, 1fr); grid-gap: 10px; }
+  #botones button {
+    border: 0; border-radius: 26px; background: #fff; font-family: inherit; font-weight: 700; color: var(--tinta);
+    box-shadow: 0 6px 0 rgba(0,0,0,.15); display: flex; align-items: center; justify-content: center;
+    min-height: 60px; font-size: 24px; padding: 8px 16px; transition: transform .1s;
+  }
+  #botones button:active { transform: scale(.94); }
+  #botones button.grande { aspect-ratio: 1 / 1; min-height: 140px; font-size: 64px; padding: 14px; }
+  #botones button.grande img { width: 82%; height: 82%; }
+  #botones.album button { min-height: 0; padding: 8px; border-radius: 16px; }
+  #botones.album button img { width: 100%; height: 100%; }
+  #botones button.tarjeta { justify-content: flex-start; font-size: 28px; min-height: 64px; }
+  #botones button.tarjeta img { width: 50px; height: 50px; margin-right: 18px; }
+  #botones button.tarjeta .abc { width: 58px; margin-right: 18px; text-align: center; color: #c62828; font-size: 40px; }
+  #botones button .icono { width: 30px; height: 30px; margin-right: 10px; }
+  #botones button.foco { box-shadow: 0 0 0 6px var(--foco), 0 6px 0 rgba(0,0,0,.15); }
+  #botones button.bien { background: #c8e6c9; box-shadow: 0 0 0 6px #43a047; }
+  #botones button.mal { background: #ffcdd2; opacity: .6; animation: tiembla .4s; }
+  #botones button.usada { visibility: hidden; }
+  #botones button.bloqueada img { filter: brightness(0); opacity: .2; }
+  #botones button.escuchar { grid-column: 1 / -1; background: #ffe0b2; font-size: 30px; }
+  #botones button.escuchar img { width: 44px; height: 44px; margin-right: 12px; }
+  .t-letras { background: #ffcdd2 !important; } .t-escucha { background: #ffe0b2 !important; }
+  .t-silabas { background: #c8e6c9 !important; } .t-palabras { background: #bbdefb !important; } .t-arma { background: #e1bee7 !important; }
+  #titulo { color: #fff; font-size: 30px; text-align: center; margin: 0 0 12px; flex-shrink: 0; text-shadow: 0 3px 0 #0277bd; min-height: 10px; }
+  #aviso { color: #fff; font-size: 26px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,.35); line-height: 1.4; }
+  @keyframes tiembla { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+</style>
+</head>
+<body>
+<header>
+  <button id="atras" class="invisible" aria-label="Atrás"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+  <div id="estado">Conectando con la TV…</div>
+  <button id="repetir" class="invisible" aria-label="Escuchar otra vez"><img src="img/_altavoz.svg" alt=""></button>
+</header>
+<main>
+  <h1 id="titulo"></h1>
+  <div id="botones"></div>
+  <p id="aviso"></p>
+</main>
+<script src="js/peerjs.min.js"></script>
+<script src="js/control.js"></script>
+</body>
+</html>

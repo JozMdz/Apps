@@ -189,6 +189,7 @@
 
   function mostrar(id, foco) {
     callar();
+    bloqueado = false;
     var nueva = $(id);
     if (pantalla) pantalla.classList.remove('activa');
     nueva.classList.add('activa');
@@ -366,7 +367,9 @@
       var cuantas = r.nivel >= 3 ? 4 : 3;
       do { correcta = azar(base); } while (contiene(r.usadas, correcta) && r.usadas.length < base.length);
       r.usadas.push(correcta);
-      if (r.nivel === 1) {          // misma consonante, distinta vocal: ma / me / mo
+      if (r.nivel === 1) {          // m, p, s, l como en kínder; misma consonante, distinta vocal: ma / me / mo
+        while (!contiene(['m', 'p', 's', 'l'], correcta.charAt(0))) correcta = azar(base);
+        r.usadas[r.usadas.length - 1] = correcta;
         otras = escoger(base, cuantas - 1, function (s) { return s !== correcta && s.charAt(0) === correcta.charAt(0); });
       } else if (r.nivel === 2) {   // misma vocal, distinta consonante: ma / pa / sa
         otras = escoger(base, cuantas - 1, function (s) { return s !== correcta && s.slice(-1) === correcta.slice(-1); });
@@ -648,6 +651,17 @@
     guardar(); etiquetasPapas();
   });
   function abrirPapas() { confirmarBorrado = false; etiquetasPapas(); mostrar('papas'); }
+
+  /* ---------- Para el control desde el celular (js/conexion.js) ---------- */
+  window.LEO = {
+    focos: focosVisibles,
+    pantalla: function () { return pantalla; },
+    enfocado: function () { return enfocado; },
+    elegir: function (e) { enfocar(e, true); activar(e); },
+    mover: mover,
+    atras: atras,
+    repetir: repetir
+  };
 
   /* ---------- Arranque ---------- */
   ajustar();

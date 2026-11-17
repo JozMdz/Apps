@@ -168,6 +168,15 @@ instalado: las voces (español de México) y los dibujos vienen dentro de la app
 - **Estampas**: cada ronda con 3 estrellas o más regala una estampa para el álbum (*Mis estampas*).
 - **Para papás**: letra en minúsculas o MAYÚSCULAS, voz encendida/apagada, cambiar el nivel y borrar el progreso.
 - Botón 🔊 (o el botón rojo del control) repite la instrucción. Atrás regresa al inicio; en el inicio cierra la app.
+- **Jugar con el celular** (como los juegos de Netflix): en la pantalla de inicio aparece un código QR.
+  Al escanearlo, el celular muestra los dibujos, sílabas y menús de la TV como botones grandes para
+  tocar. Usa el servidor público de [PeerJS](https://peerjs.com/) solo para que el celular encuentre a
+  la TV; luego se comunican directo por el Wi‑Fi. Necesita internet y que la página
+  `control.html` esté publicada en GitHub Pages (ver abajo). Sin internet el QR no aparece y se juega
+  con el control remoto. Para probar sin internet: `npx peerjs --port 9000` y abrir
+  `index.html?senal=127.0.0.1:9000`.
+- **Pensado para kínder 3 (5 años, SEP)**: empieza con vocales y con las sílabas de m, p, s, l
+  (*ma me mi mo mu*), letra script en minúsculas, y sube de nivel cuando el niño ya domina.
 
 ## Cómo ponerla en la TV
 
@@ -205,5 +214,5 @@ python3 tv-lectura/herramientas/generar.py --twemoji package --voz es_MX-claude-
 Para probarla en la computadora: `cd tv-lectura && python3 -m http.server` y abrir
 `http://localhost:8000` (las flechas, Enter y Esc hacen de control remoto).
 
-Créditos: dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letra
+Créditos: conexión con [PeerJS](https://peerjs.com/) (MIT), QR con [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letra
 [Andika](https://software.sil.org/andika/) (SIL OFL), voz [Piper](https://github.com/rhasspy/piper) es_MX "claude".

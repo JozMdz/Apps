@@ -173,3 +173,18 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 .ico-grande { width: 60px; height: 60px; }
 .altavoz-grande img { width: 200px; height: 200px; }
 .boton-redondo svg, .boton-redondo img { vertical-align: middle; }
+
+/* Código QR para jugar con el celular */
+#celular {
+  position: absolute; right: 50px; bottom: 40px; width: 250px;
+  background: #fff; border-radius: 30px; padding: 18px; text-align: center;
+  box-shadow: 0 8px 0 rgba(0,0,0,.15);
+}
+#celular.oculto { display: none; }
+#celular-qr { width: 214px; height: 214px; }
+#celular-qr svg { width: 100%; height: 100%; }
+#celular-texto { font-size: 26px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
+#celular.conectado { background: #c8e6c9; }
+#celular.conectado #celular-qr { display: none; }
+#celular.conectado #celular-texto { font-size: 32px; }
+#celular.conectado #celular-texto::before { content: "✔ "; color: #2e7d32; }
