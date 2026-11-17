@@ -64,11 +64,7 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 .t-icono { font-size: 110px; font-weight: 700; line-height: 1; }
 .t-nombre { font-size: 54px; font-weight: 700; }
 .t-nivel { font-size: 32px; opacity: .8; }
-.t-letras { background: #ffcdd2; } .t-letras .t-icono { color: #c62828; }
-.t-escucha { background: #ffe0b2; }
-.t-silabas { background: #c8e6c9; } .t-silabas .t-icono { color: #2e7d32; font-size: 80px; }
-.t-palabras { background: #bbdefb; }
-.t-arma { background: #e1bee7; }.abajo { position: absolute; bottom: 60px; display: flex; }
+.abajo { position: absolute; bottom: 60px; display: flex; }
 .boton-chico { font-size: 40px; padding: 18px 40px; border-radius: 60px; background: #fff; font-weight: 700; box-shadow: 0 8px 0 rgba(0,0,0,.15); }
 
 /* Barra superior de juego */
@@ -188,3 +184,114 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 #celular.conectado #celular-qr { display: none; }
 #celular.conectado #celular-texto { font-size: 32px; }
 #celular.conectado #celular-texto::before { content: "✔ "; color: #2e7d32; }
+
+/* ---------- Menús de secciones ---------- */
+.tarjeta { position: relative; }
+.t-icono.largo { font-size: 72px; }
+.t-candado { position: absolute; top: 18px; right: 18px; width: 64px; height: 64px; }
+#menu-tarjetas { margin-top: 110px; }
+.menu.chico .tarjeta { width: 265px; height: 350px; }
+.menu.chico .t-nombre { font-size: 44px; }
+.menu.chico .t-icono { font-size: 90px; }
+.menu.chico .t-icono.largo { font-size: 62px; }
+.menu.chico > * + * { margin-left: 28px; }
+.cuerpo { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
+#aviso-sonido {
+  display: none; position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%);
+  background: #263238; color: #fff; font-size: 40px; padding: 20px 50px; border-radius: 60px; z-index: 9;
+}
+#aviso-sonido.visible { display: block; }
+
+/* ---------- Inglés y números ---------- */
+.palabra-grande.ingles { font-size: 110px; color: #1565c0; padding: 20px 60px; }
+.palabra-grande.pregunta-texto { font-size: 100px; letter-spacing: 0; }
+.opcion.color { background: #eceff1; }
+.circulo { width: 200px; height: 200px; border-radius: 50%; border: 6px solid rgba(0,0,0,.18); display: block; }
+.grupo { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; }
+.grupo img { width: 100px; height: 100px; margin: 8px; }
+.grupo.muchos img { width: 84px; height: 84px; }
+.grupo.panel { background: #fff; border-radius: 50px; padding: 30px; max-width: 800px; box-shadow: 0 14px 0 rgba(0,0,0,.15); }
+.grupo.panel.chico { max-width: 400px; min-width: 150px; padding: 20px; }
+.grupo.panel.chico img { width: 80px; height: 80px; margin: 6px; }
+.suma { display: flex; align-items: center; }
+.signo { font-size: 150px; font-weight: 700; color: #fff; margin: 0 30px; text-shadow: 0 6px 0 #0277bd; }
+.suma .hueco { min-width: 190px; font-size: 150px; font-weight: 700; }
+.opcion.panel-opcion { width: 580px; height: 300px; padding: 16px; }
+.panel-opcion .grupo img { width: 84px; height: 84px; margin: 6px; }
+
+/* ---------- Mi nombre ---------- */
+#opciones.muchas { flex-wrap: wrap; justify-content: center; width: 1500px; margin-top: 30px; }
+#opciones.muchas .opcion { min-width: 150px; height: 170px; font-size: 90px; padding: 10px; margin: 10px; }
+.palabra-huecos.chicos { font-size: 100px; }
+.palabra-huecos.chicos .hueco { min-width: 120px; height: 150px; padding: 0 14px; }
+.hueco.vacio.guia { color: rgba(38,50,56,.3); }
+
+/* ---------- PIN, tiempo y nombre ---------- */
+.pin-mensaje { font-size: 54px; font-weight: 700; color: #fff; text-shadow: 0 4px 0 #0277bd; margin-top: 10px; }
+.pin-puntos { display: flex; margin: 26px 0; }
+.pin-puntos i { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.5); margin: 0 14px; display: block; }
+.pin-puntos i.lleno { background: #263238; }
+.pin-puntos.mal { animation: tiembla .4s; }
+.pin-teclado { display: grid; grid-template-columns: repeat(3, 220px); grid-gap: 18px; }
+.pin-tecla { height: 118px; border-radius: 30px; background: #fff; font-size: 70px; font-weight: 700; box-shadow: 0 8px 0 rgba(0,0,0,.15); }
+.pin-tecla.borrar { font-size: 40px; }
+.fila-tiempo { display: flex; margin-top: 150px; }
+.fila-tiempo > * + * { margin-left: 50px; }
+.boton-tiempo { width: 320px; height: 320px; border-radius: 50px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 12px 0 rgba(0,0,0,.15); }
+.boton-tiempo b { font-size: 160px; line-height: 1; }
+.boton-tiempo span { font-size: 44px; font-weight: 700; }
+.campo-nombre { font-size: 120px; font-weight: 700; background: #fff; border-radius: 40px; min-width: 700px; text-align: center; padding: 0 60px; margin: 10px 0 30px; box-shadow: 0 10px 0 rgba(0,0,0,.15); }
+.letras-teclado { display: grid; grid-template-columns: repeat(9, 150px); grid-gap: 16px; }
+.letra-tecla { height: 108px; border-radius: 24px; background: #fff; font-size: 70px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+.letra-tecla.ancha { grid-column: span 2; font-size: 44px; }
+.letra-tecla.listo { background: #ffd600; }
+.ajustes { display: grid; grid-template-columns: 1fr 1fr; grid-gap: 26px; width: 1700px; }
+.ajustes > * + * { margin-top: 0; }
+.ajuste { font-size: 36px; }
+
+/* ---------- Música ---------- */
+.pad { position: relative; font-weight: 700; color: #263238; box-shadow: 0 12px 0 rgba(0,0,0,.2); display: flex; align-items: center; justify-content: center; }
+.pad.golpe { animation: golpe .18s; }
+@keyframes golpe { 40% { transform: scale(.9); filter: brightness(1.25); } }
+.pad-numero { position: absolute; top: 14px; left: 14px; width: 54px; height: 54px; line-height: 54px; border-radius: 50%; background: rgba(255,255,255,.75); font-size: 34px; text-align: center; }
+.tambores { display: grid; grid-template-columns: repeat(3, 340px); grid-gap: 40px 90px; margin-top: 50px; justify-items: center; }
+.tambores .pad { width: 320px; height: 320px; border-radius: 50%; font-size: 46px; border: 14px solid rgba(255,255,255,.75); }
+.tambores .pad.platillo { border-width: 4px; }
+.tambores .pad.bombo { border-color: #fff; }
+.teclas { display: flex; margin-top: 60px; }
+.teclas > * + * { margin-left: 20px; }
+.teclas .pad { width: 190px; height: 520px; border-radius: 24px 24px 40px 40px; font-size: 64px; align-items: flex-end; padding-bottom: 40px; }
+.pad.guia { box-shadow: 0 0 0 12px #fff, 0 0 60px 20px #fff; animation: brinca .6s ease-in-out infinite; }
+@keyframes brinca { 50% { transform: translateY(-26px); } }
+.cancion { margin-top: 50px; }
+.acordes { display: grid; grid-template-columns: repeat(3, 440px); grid-gap: 40px; margin-top: 110px; }
+.acordes .pad { height: 250px; border-radius: 50px; font-size: 90px; }
+.guitarra-dibujo { position: absolute; right: 10px; top: -100px; width: 200px; height: 200px; }
+
+/* ---------- Minijuegos ---------- */
+.hud { display: flex; align-items: center; width: auto !important; }
+.vidas img { width: 64px; height: 64px; margin-right: 8px; }
+.vidas img.perdida { filter: grayscale(1); opacity: .3; }
+.puntos { font-size: 60px; font-weight: 700; color: #fff; margin-left: 30px; text-shadow: 0 4px 0 #0277bd; min-width: 210px; }
+.pista { position: relative; width: 1760px; height: 700px; overflow: hidden; border-radius: 40px; background: linear-gradient(180deg, #81d4fa, #fff8e1 84%); box-shadow: 0 10px 0 rgba(0,0,0,.15); }
+.suelo { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: #d7a86e; border-top: 10px solid #bf8f52; }
+.caballo { position: absolute; left: 240px; bottom: 110px; width: 180px; height: 180px; transform: scaleX(-1); }
+.caballo.aire { transform: scaleX(-1) rotate(12deg); }
+.caballo.parpadea { animation: parpadea .25s linear infinite; }
+@keyframes parpadea { 50% { opacity: .25; } }
+.obstaculo { position: absolute; bottom: 100px; }
+.boton-salta { margin-top: 22px; padding: 16px 120px; }
+.pista.campo { width: 1500px; background: linear-gradient(180deg, #b3e5fc, #c8e6c9); }
+.canasta { position: absolute; bottom: 20px; width: 200px; height: 200px; transition: left .12s; }
+.fruta { position: absolute; width: 120px; height: 120px; }
+.controles-atrapa { display: flex; margin-top: 22px; }
+.controles-atrapa > * + * { margin-left: 300px; }
+.controles-atrapa .boton-grande { padding: 14px 110px; }
+.mesa { display: grid; grid-template-columns: repeat(4, 250px); grid-gap: 24px; margin-top: 10px; }
+.opcion.carta { min-width: 0; width: 250px; height: 250px; background: #7e57c2; }
+.opcion.carta img { width: 190px; height: 190px; }
+.opcion.carta .reverso { width: 110px; height: 110px; opacity: .85; }
+.opcion.carta.vista { background: #fff; }
+.opcion.carta.bien { background: #c8e6c9; }
+#minifin { justify-content: center; }
+#minifin h2 { font-size: 150px; color: #fff; margin: 0 0 80px; text-shadow: 0 8px 0 #0277bd; }

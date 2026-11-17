@@ -5,7 +5,8 @@ Uso:
     python3 herramientas/generar.py --twemoji RUTA_SVG --voz MODELO.onnx [--rehacer]
 
 - RUTA_SVG: carpeta con los SVG de Twemoji (npm pack @twemoji/svg).
-- MODELO.onnx: voz de Piper en español de México (es_MX-claude-high.onnx),
+- MODELO.onnx: voz de Piper en español de México (es_MX-claude-high.onnx); con --voz-en
+  se da otra en inglés (en_US-amy-medium.onnx) para el módulo de inglés,
   con su .onnx.json al lado. Requiere `pip install piper-tts` y ffmpeg.
 
 Lee herramientas/palabras.txt y escribe js/datos.js, img/*.svg y audio/*.mp3.
@@ -30,7 +31,21 @@ NOMBRES_LETRAS = {
     "y": "ye", "z": "zeta",
 }
 
-ICONOS = {"estrella": "⭐", "altavoz": "🔊", "libro": "📖", "rompecabezas": "🧩",
+NUMEROS = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve",
+           "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete",
+           "dieciocho", "diecinueve", "veinte"]
+NUMBERS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+# clave: (español, inglés, color en pantalla)
+COLORES = [("red", "rojo", "#e53935"), ("blue", "azul", "#1e88e5"), ("yellow", "amarillo", "#fdd835"),
+           ("green", "verde", "#43a047"), ("orange", "naranja", "#fb8c00"), ("pink", "rosa", "#f06292"),
+           ("purple", "morado", "#8e24aa"), ("black", "negro", "#212121"), ("white", "blanco", "#ffffff"),
+           ("brown", "café", "#795548")]
+FRASES_EN = {"bien1": "Very good!", "bien2": "Great job!", "bien3": "Excellent!", "mal": "Try again."}
+
+ICONOS = {"musica": "🎵", "bateria": "🥁", "teclado": "🎹", "guitarra": "🎸", "control": "🎮",
+          "candado": "🔒", "corre": "🐎", "canasta": "🧺", "corazon": "❤️", "roca": "🪨",
+          "paleta_colores": "🎨", "carta": "❓", "reloj_arena": "⏳",
+          "estrella": "⭐", "altavoz": "🔊", "libro": "📖", "rompecabezas": "🧩",
           "engrane": "⚙️", "casa": "🏠"}
 
 FRASES = {
@@ -51,6 +66,20 @@ FRASES = {
     "nivel": "¡Subiste de nivel!",
     "otra": "¡Sigue practicando!",
     "album": "Estas son tus estampas.",
+    "ingles": "Escucha en inglés y busca.",
+    "cuantos": "¿Cuántos hay?",
+    "dondenum": "¿Dónde está el número",
+    "cuantoes": "¿Cuánto es?",
+    "mas": "más",
+    "dondemas": "¿Dónde hay más?",
+    "dondemenos": "¿Dónde hay menos?",
+    "mayor": "¿Cuál número es más grande?",
+    "nombre": "Arma tu nombre.",
+    "tunombre": "¡Ese es tu nombre!",
+    "tiempo": "Se acabó el tiempo de juegos. ¡Vamos a aprender!",
+    "ganaste": "¡Ganaste!",
+    "otravez": "¡Casi! Vamos otra vez.",
+    "tocar": "¡A tocar!",
 }
 
 ESCUCHA_SILABAS = ["ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu",
@@ -74,10 +103,14 @@ def leer_palabras():
             linea = linea.strip()
             if not linea or linea.startswith("#"):
                 continue
-            p, s, e = [x.strip() for x in linea.split("|")]
+            partes = [x.strip() for x in linea.split("|")]
+            p, s, e = partes[:3]
+            ingles = partes[3] if len(partes) > 3 else ""
+            grupo = partes[4] if len(partes) > 4 else "-"
             if s.replace("-", "") != p:
                 sys.exit(f"Las sílabas de '{p}' no forman la palabra: {s}")
-            palabras.append({"p": p, "s": s.split("-"), "e": e, "k": clave(p)})
+            palabras.append({"p": p, "s": s.split("-"), "e": e, "k": clave(p),
+                             "en": ingles, "g": grupo})
     return palabras
 
 
@@ -116,6 +149,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--twemoji", required=True)
     ap.add_argument("--voz")
+    ap.add_argument("--voz-en", dest="voz_en")
     ap.add_argument("--rehacer", action="store_true")
     a = ap.parse_args()
 
@@ -145,7 +179,23 @@ def main():
     for l in iniciales:
         n = NOMBRES_LETRAS[l]
         textos["l_" + clave(l)] = f"Esta es la letra {n}. ¿Qué dibujo empieza con {n}?"
+    for l, n in NOMBRES_LETRAS.items():
         textos["n_" + clave(l)] = n + "."
+    for i, n in enumerate(NUMEROS):
+        textos[f"m_{i}"] = n + "."
+    for k, es, _ in COLORES:
+        textos["c_" + k] = es + "."
+    # Inglés (se generan con la voz --voz-en)
+    ingles = {}
+    for w in palabras:
+        if w["en"] and w["g"] != "-":
+            ingles["e_" + w["k"]] = w["en"] + "."
+    for i, n in enumerate(NUMBERS):
+        ingles[f"en_{i}"] = n + "."
+    for k, _, _ in COLORES:
+        ingles["ec_" + k] = k + "."
+    for k, t in FRASES_EN.items():
+        ingles["ef_" + k] = t
     for k, t in FRASES.items():
         textos["f_" + k] = t
 
@@ -156,12 +206,17 @@ def main():
             decir(t, os.path.join(aud, k + ".mp3"), a.voz, a.rehacer)
             print(f"\r voces {i + 1}/{len(textos)}", end="", flush=True)
         print()
+    if a.voz_en:
+        for k, t in sorted(ingles.items()):
+            decir(t, os.path.join(RAIZ, "audio", k + ".mp3"), a.voz_en, a.rehacer)
 
     datos = {
-        "palabras": [{"p": w["p"], "s": w["s"], "k": w["k"]} for w in palabras],
+        "palabras": [dict({"p": w["p"], "s": w["s"], "k": w["k"]},
+                          **({"en": w["en"], "g": w["g"]} if w["g"] != "-" else {})) for w in palabras],
+        "colores": [{"k": k, "es": es, "hex": h} for k, es, h in COLORES],
         "letras": {l: NOMBRES_LETRAS[l] for l in iniciales},
         "escucha": ESCUCHA_SILABAS,
-        "audios": sorted(textos.keys()),
+        "audios": sorted(list(textos.keys()) + list(ingles.keys())),
     }
     with open(os.path.join(RAIZ, "js", "datos.js"), "w", encoding="utf-8") as f:
         f.write("// Generado por herramientas/generar.py; no editar a mano.\n")

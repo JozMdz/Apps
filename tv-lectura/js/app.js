@@ -41,13 +41,13 @@
       var g = JSON.parse(localStorage.getItem('leoyjuego') || 'null');
       if (g) for (var k in g) base[k] = g[k];
     } catch (e) { /* sin almacenamiento: se juega igual */ }
-    JUEGOS.forEach(function (j) { if (!base.niveles[j]) base.niveles[j] = 1; });
     return base;
   })();
   function guardar() {
     try { localStorage.setItem('leoyjuego', JSON.stringify(EST)); } catch (e) { /* nada */ }
   }
   function txt(t) { return EST.mayus ? t.toUpperCase() : t; }
+  function nivelDe(j) { return EST.niveles[j] || 1; }
 
   /* ---------- Escalar el escenario de 1920x1080 a la pantalla ---------- */
   function ajustar() {
@@ -102,9 +102,17 @@
       reproductor.onerror = siguiente;
       reproductor.src = 'audio/' + lista[i++] + '.mp3';
       var p = reproductor.play();
-      if (p && p.catch) p.catch(function () { setTimeout(siguiente, 300); });
+      if (p && p.catch) p.catch(function (err) {
+        // El navegador no deja sonar hasta que alguien pulse algo en la TV.
+        if (err && err.name === 'NotAllowedError') avisoSonido(true);
+        setTimeout(siguiente, 300);
+      });
     }
     siguiente();
+  }
+  function avisoSonido(ver) {
+    var a = $('aviso-sonido');
+    if (a) a.className = ver ? 'visible' : '';
   }
   function callar() { turnoVoz++; try { reproductor.pause(); } catch (e) { /* nada */ } }
   function felicitar() { return 'f_bien' + (1 + Math.floor(Math.random() * 5)); }
@@ -160,9 +168,19 @@
     if (e.alElegir) e.alElegir(); else e.click();
   }
 
+  var TECLAS = {};   // teclas propias de una pantalla: TECLAS[id](codigo) devuelve true si la usó
+  var ATRAS = {};    // a dónde regresa cada pantalla
+  var colores = '';
   document.addEventListener('keydown', function (ev) {
     var k = ev.keyCode;
     var manejada = true;
+    avisoSonido(false);
+    // Botones de colores rojo, verde, amarillo, azul seguidos: borra el PIN olvidado.
+    if (k >= 403 && k <= 406) {
+      colores = (colores + (k - 403)).slice(-4);
+      if (colores === '0123') { EST.pin = null; guardar(); colores = ''; }
+    } else colores = '';
+    if (pantalla && TECLAS[pantalla.id] && TECLAS[pantalla.id](k)) { ev.preventDefault(); return; }
     if (k === 37) mover(-1, 0);
     else if (k === 39) mover(1, 0);
     else if (k === 38) mover(0, -1);
@@ -201,8 +219,13 @@
 
   function atras() {
     if (!pantalla) return;
-    if (pantalla.id === 'inicio') { salir(); return; }
-    if (pantalla.id === 'juego') ronda = null;
+    var id = pantalla.id;
+    if (ATRAS[id]) { ATRAS[id](); return; }
+    if (id === 'inicio') { salir(); return; }
+    if (id === 'juego' || id === 'fin') {
+      ronda = null;
+      if (catActual) { abrirMenu(catActual); return; }
+    }
     irInicio();
   }
   function salir() {
@@ -261,7 +284,7 @@
   var ronda = null;
 
   function empezar(juego) {
-    ronda = { juego: juego, nivel: EST.niveles[juego], n: 0, aciertos: 0, marcas: [], usadas: [] };
+    ronda = { juego: juego, nivel: nivelDe(juego), n: 0, aciertos: 0, marcas: [], usadas: [], total: POR_RONDA };
     mostrar('juego', $('volver'));
     siguientePregunta();
   }
@@ -269,7 +292,7 @@
   function dibujarProgreso() {
     var p = $('progreso');
     p.innerHTML = '';
-    for (var i = 0; i < POR_RONDA; i++) {
+    for (var i = 0; i < ronda.total; i++) {
       var c = el('i');
       if (ronda.marcas[i] === 'ok') c.className = 'ok';
       else if (ronda.marcas[i] === 'medio') c.className = 'medio';
@@ -280,14 +303,16 @@
 
   function siguientePregunta() {
     if (!ronda) return;
-    if (ronda.n >= POR_RONDA) { terminarRonda(); return; }
+    if (ronda.n >= ronda.total) { terminarRonda(); return; }
     ronda.fallo = false;
     bloqueado = false;
     $('pregunta').innerHTML = '';
     $('opciones').innerHTML = '';
-    dibujarProgreso();
+    $('opciones').className = '';
     ronda.voz = [];
+    ronda.repetir = null;
     PREGUNTAS[ronda.juego](ronda);
+    dibujarProgreso();
     var ops = $('opciones').querySelectorAll('.foco');
     enfocar(ops[0] || $('repetir'), true);
     hablar(ronda.voz);
@@ -307,11 +332,13 @@
     var r = ronda;
     hablar(voz, function () { if (ronda === r) setTimeout(siguientePregunta, 350); });
   }
-  function equivocado(boton, voz) {
+  function equivocado(boton, voz, temporal) {
     ronda.fallo = true;
     boton.classList.remove('mal');
     void boton.offsetWidth;  // reinicia la animación
     boton.classList.add('mal');
+    // En los juegos de armar, la ficha puede servir después: se vuelve a encender.
+    if (temporal) setTimeout(function () { boton.classList.remove('mal'); }, 700);
     hablar(voz || [animar()]);
   }
 
@@ -497,7 +524,7 @@
               hablar(['s_' + clave(s)]);
             }
           } else {
-            equivocado(b);
+            equivocado(b, null, true);
           }
         }, function () { hablar(['s_' + clave(s)]); });
         $('opciones').appendChild(b);
@@ -526,6 +553,7 @@
   function terminarRonda() {
     var r = ronda;
     ronda = null;
+    r.aciertos = Math.round(r.aciertos * POR_RONDA / r.total);   // siempre sobre 5 estrellas
     var cont = $('fin-estrellas');
     cont.innerHTML = '';
     for (var i = 0; i < POR_RONDA; i++) {
@@ -551,8 +579,8 @@
       }
       lluvia();
     }
-    if (r.aciertos >= 4 && EST.niveles[r.juego] < NIVEL_MAX) {
-      EST.niveles[r.juego]++;
+    if (r.aciertos >= 4 && nivelDe(r.juego) < NIVEL_MAX) {
+      EST.niveles[r.juego] = nivelDe(r.juego) + 1;
       mensaje = '¡Subiste al nivel ' + EST.niveles[r.juego] + '!';
       voz.push('f_nivel');
     } else if (r.aciertos < 3) {
@@ -582,25 +610,102 @@
   }
   function lluviaChica() { lluvia(30); }
 
-  /* ---------- Inicio ---------- */
-  function irInicio() {
-    [].forEach.call(document.querySelectorAll('.tarjeta'), function (t) {
-      t.querySelector('.t-nivel').textContent = 'Nivel ' + EST.niveles[t.getAttribute('data-juego')];
-    });
-    $('cuenta-estampas').textContent = EST.estampas.length + ' / ' + P.length;
-    mostrar('inicio', ultimaTarjeta || document.querySelector('.tarjeta'));
-  }
+  /* ---------- Inicio y menús ---------- */
+  var CATS = {};
+  var catActual = null;
+  var ultimoItem = {};
   var ultimaTarjeta = null;
 
-  [].forEach.call(document.querySelectorAll('.tarjeta'), function (t) {
-    prepararFoco(t, function () { ultimaTarjeta = t; empezar(t.getAttribute('data-juego')); });
+  function categoria(id, nombre) {
+    if (!CATS[id]) CATS[id] = { id: id, nombre: nombre || id, items: [] };
+    else if (nombre) CATS[id].nombre = nombre;
+    return CATS[id];
+  }
+  /* Agrega un juego o actividad a un menú.
+   * item: { id, nombre, color, icono (texto) o img (archivo de img/), ronda: true si es de
+   * preguntas (PREGUNTAS[id]), abrir: función para las demás, antes(seguir): permiso previo } */
+  function agregarJuego(cat, item) {
+    categoria(cat).items.push(item);
+    if (item.ronda && !contiene(JUEGOS, item.id)) JUEGOS.push(item.id);
+  }
+  function tarjeta(it) {
+    var b = el('button', 'tarjeta');
+    b.style.background = it.color;
+    b.setAttribute('data-color', it.color);
+    var ic = el('span', 't-icono' + (it.icono && it.icono.length > 3 ? ' largo' : ''));
+    if (it.img) { var i = el('img', 't-img'); i.src = 'img/' + it.img + '.svg'; ic.appendChild(i); }
+    else { ic.textContent = it.icono; ic.style.color = it.tinta || '#263238'; }
+    b.appendChild(ic);
+    b.appendChild(el('span', 't-nombre', it.nombre));
+    b.appendChild(el('span', 't-nivel', it.ronda ? 'Nivel ' + nivelDe(it.id) : (it.nota || '')));
+    return b;
+  }
+  function abrirMenu(id) {
+    var c = CATS[id];
+    catActual = id;
+    $('menu-titulo').textContent = c.titulo ? c.titulo() : c.nombre;
+    var cont = $('menu-tarjetas');
+    cont.innerHTML = '';
+    cont.className = 'menu' + (c.items.length > 5 ? ' chico' : '');
+    var foco = null;
+    c.items.forEach(function (it) {
+      var b = tarjeta(it);
+      prepararFoco(b, function () {
+        ultimoItem[id] = it.id;
+        var ir = function () { if (it.ronda) empezar(it.id); else it.abrir(); };
+        if (it.antes) it.antes(ir); else ir();
+      });
+      cont.appendChild(b);
+      if (ultimoItem[id] === it.id) foco = b;
+    });
+    mostrar('menu', foco || cont.firstChild);
+  }
+  function irInicio() {
+    catActual = null;
+    $('cuenta-estampas').textContent = EST.estampas.length + ' / ' + P.length;
+    mostrar('inicio', ultimaTarjeta || document.querySelector('#inicio .tarjeta'));
+  }
+
+  [].forEach.call(document.querySelectorAll('#inicio .tarjeta'), function (t) {
+    prepararFoco(t, function () {
+      ultimaTarjeta = t;
+      var c = CATS[t.getAttribute('data-cat')];
+      if (!c) return;
+      if (c.antes) c.antes(function () { abrirMenu(c.id); }); else abrirMenu(c.id);
+    });
   });
+  categoria('leer', 'Leer');
+  agregarJuego('leer', { id: 'letras', nombre: 'Letras', icono: 'Aa', tinta: '#c62828', color: '#ffcdd2', ronda: true });
+  agregarJuego('leer', { id: 'escucha', nombre: 'Escucha', img: '_altavoz', color: '#ffe0b2', ronda: true });
+  agregarJuego('leer', { id: 'silabas', nombre: 'Sílabas', icono: 'ma·no', tinta: '#2e7d32', color: '#c8e6c9', ronda: true });
+  agregarJuego('leer', { id: 'palabras', nombre: 'Palabras', img: '_libro', color: '#bbdefb', ronda: true });
+  agregarJuego('leer', { id: 'arma', nombre: 'Arma', img: '_rompecabezas', color: '#e1bee7', ronda: true });
+
+  function pantallaNueva(id, titulo) {
+    var s = el('section', 'pantalla');
+    s.id = id;
+    var barra = el('div', 'barra');
+    var b = el('button', 'boton-redondo nav-atras');
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg>';
+    prepararFoco(b, function () { atras(); });
+    var h = el('h2', '', titulo);
+    barra.appendChild(b); barra.appendChild(h); barra.appendChild(el('span'));
+    s.appendChild(barra);
+    var cuerpo = el('div', 'cuerpo');
+    s.appendChild(cuerpo);
+    $('escenario').insertBefore(s, $('confeti'));
+    return { raiz: s, barra: barra, titulo: h, cuerpo: cuerpo, atras: b };
+  }
+
   prepararFoco($('ir-album'), function () { abrirAlbum(); });
-  prepararFoco($('ir-papas'), function () { abrirPapas(); });
+  prepararFoco($('ir-papas'), function () {
+    if (window.LEO.pedirPIN && EST.pin) window.LEO.pedirPIN('Para papás', abrirPapas); else abrirPapas();
+  });
+  prepararFoco($('menu-volver'), function () { atras(); });
   prepararFoco($('volver'), function () { atras(); });
   prepararFoco($('repetir'), function () { repetir(); });
   prepararFoco($('otra-vez'), function () { /* se asigna al terminar la ronda */ });
-  prepararFoco($('fin-inicio'), function () { irInicio(); });
+  prepararFoco($('fin-inicio'), function () { atras(); });
   prepararFoco($('album-volver'), function () { irInicio(); });
   prepararFoco($('papas-volver'), function () { irInicio(); });
 
@@ -631,15 +736,17 @@
   function etiquetasPapas() {
     $('aj-letra').textContent = 'Letra: ' + (EST.mayus ? 'MAYÚSCULAS' : 'minúsculas');
     $('aj-voz').textContent = 'Voz: ' + (EST.voz ? 'encendida' : 'apagada');
-    var nombres = { letras: 'Letras', escucha: 'Escucha', silabas: 'Sílabas', palabras: 'Palabras', arma: 'Arma' };
-    $('aj-nivel').textContent = 'Nivel: ' + JUEGOS.map(function (j) { return nombres[j] + ' ' + EST.niveles[j]; }).join(' · ');
+    var n = JUEGOS.map(nivelDe);
+    var iguales = n.every(function (x) { return x === n[0]; });
+    $('aj-nivel').textContent = 'Nivel de los juegos: ' + (iguales ? n[0] : 'cada uno el suyo') + ' (OK: todos al siguiente)';
+    if (window.LEO.etiquetasPapas) window.LEO.etiquetasPapas();
     $('aj-borrar').textContent = confirmarBorrado ? '¿Seguro? Pulsa OK otra vez para borrar' : 'Borrar progreso y estampas';
   }
   prepararFoco($('aj-letra'), function () { EST.mayus = !EST.mayus; guardar(); etiquetasPapas(); });
   prepararFoco($('aj-voz'), function () { EST.voz = !EST.voz; guardar(); etiquetasPapas(); });
   prepararFoco($('aj-nivel'), function () {
     // Pone todos los juegos en el mismo nivel: 1 → 2 → 3 → 1
-    var n = EST.niveles.letras % NIVEL_MAX + 1;
+    var n = nivelDe('letras') % NIVEL_MAX + 1;
     JUEGOS.forEach(function (j) { EST.niveles[j] = n; });
     guardar(); etiquetasPapas();
   });
@@ -658,12 +765,20 @@
     pantalla: function () { return pantalla; },
     enfocado: function () { return enfocado; },
     elegir: function (e) { enfocar(e, true); activar(e); },
-    mover: mover,
-    atras: atras,
-    repetir: repetir
+    mover: mover, atras: atras, repetir: repetir,
+    // Para los demás módulos (extra.js, papas.js, musica.js, mini.js)
+    $: $, el: el, azar: azar, mezclar: mezclar, escoger: escoger, contiene: contiene, clave: clave, txt: txt,
+    D: D, P: P, EST: EST, guardar: guardar, nivelDe: nivelDe,
+    hablar: hablar, callar: callar, felicitar: felicitar, animar: animar,
+    prepararFoco: prepararFoco, enfocar: enfocar, mostrar: mostrar, lluvia: lluvia,
+    PREGUNTAS: PREGUNTAS, preguntaLista: preguntaLista, equivocado: equivocado, empezar: empezar,
+    categoria: categoria, agregarJuego: agregarJuego, abrirMenu: abrirMenu, irInicio: irInicio,
+    pantallaNueva: pantallaNueva, TECLAS: TECLAS, ATRAS: ATRAS, abrirPapas: abrirPapas,
+    ronda: function () { return ronda; }
   };
 
   /* ---------- Arranque ---------- */
+  document.addEventListener('click', function () { avisoSonido(false); }, true);
   ajustar();
   precargar(['f_hola', 'f_bien1', 'f_bien2', 'f_bien3', 'f_bien4', 'f_bien5', 'f_mal1', 'f_mal2']);
   irInicio();

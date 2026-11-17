@@ -14,20 +14,21 @@
   <section id="inicio" class="pantalla">
     <h1 class="titulo">Leo y Juego</h1>
     <div class="menu">
-      <button class="foco tarjeta t-letras" data-juego="letras">
-        <span class="t-icono">Aa</span><span class="t-nombre">Letras</span><span class="t-nivel"></span>
+      <button class="foco tarjeta" data-cat="leer" data-color="#ffcdd2" style="background:#ffcdd2">
+        <span class="t-icono" style="color:#c62828">Aa</span><span class="t-nombre">Leer</span>
       </button>
-      <button class="foco tarjeta t-escucha" data-juego="escucha">
-        <span class="t-icono"><img class="t-img" src="img/_altavoz.svg" alt=""></span><span class="t-nombre">Escucha</span><span class="t-nivel"></span>
+      <button class="foco tarjeta" data-cat="ingles" data-color="#bbdefb" style="background:#bbdefb">
+        <span class="t-icono largo" style="color:#1565c0">Hello</span><span class="t-nombre">Inglés</span>
       </button>
-      <button class="foco tarjeta t-silabas" data-juego="silabas">
-        <span class="t-icono">ma·no</span><span class="t-nombre">Sílabas</span><span class="t-nivel"></span>
+      <button class="foco tarjeta" data-cat="mates" data-color="#c8e6c9" style="background:#c8e6c9">
+        <span class="t-icono" style="color:#2e7d32">123</span><span class="t-nombre">Números</span>
       </button>
-      <button class="foco tarjeta t-palabras" data-juego="palabras">
-        <span class="t-icono"><img class="t-img" src="img/_libro.svg" alt=""></span><span class="t-nombre">Palabras</span><span class="t-nivel"></span>
+      <button class="foco tarjeta" data-cat="musica" data-color="#ffe0b2" style="background:#ffe0b2">
+        <span class="t-icono"><img class="t-img" src="img/_musica.svg" alt=""></span><span class="t-nombre">Música</span>
       </button>
-      <button class="foco tarjeta t-arma" data-juego="arma">
-        <span class="t-icono"><img class="t-img" src="img/_rompecabezas.svg" alt=""></span><span class="t-nombre">Arma</span><span class="t-nivel"></span>
+      <button class="foco tarjeta" data-cat="mini" data-color="#e1bee7" style="background:#e1bee7">
+        <span class="t-icono"><img class="t-img" src="img/_control.svg" alt=""></span><span class="t-nombre">Juegos</span>
+        <img class="t-candado" src="img/_candado.svg" alt="">
       </button>
     </div>
     <div class="abajo">
@@ -40,10 +41,20 @@
     </div>
   </section>
 
+  <!-- Menú de una sección (se llena desde js/app.js) -->
+  <section id="menu" class="pantalla">
+    <div class="barra">
+      <button class="foco boton-redondo nav-atras" id="menu-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <h2 id="menu-titulo"></h2>
+      <span></span>
+    </div>
+    <div id="menu-tarjetas" class="menu"></div>
+  </section>
+
   <!-- Juego -->
   <section id="juego" class="pantalla">
     <div class="barra">
-      <button class="foco boton-redondo" id="volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <button class="foco boton-redondo nav-atras" id="volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
       <div id="progreso"></div>
       <button class="foco boton-redondo" id="repetir" aria-label="Escuchar otra vez"><img class="ico-grande" src="img/_altavoz.svg" alt=""></button>
     </div>
@@ -59,14 +70,14 @@
     <p id="fin-mensaje"></p>
     <div class="fila-botones">
       <button class="foco boton-grande" id="otra-vez"><svg viewBox="0 0 24 24" width="50" height="50" style="vertical-align:-6px"><path d="M7 4v16l13-8z" fill="#263238"/></svg> Otra vez</button>
-      <button class="foco boton-grande secundario" id="fin-inicio"><img class="ico" src="img/_casa.svg" alt=""> Inicio</button>
+      <button class="foco boton-grande secundario" id="fin-inicio"><img class="ico" src="img/_casa.svg" alt=""> Menú</button>
     </div>
   </section>
 
   <!-- Álbum -->
   <section id="album" class="pantalla">
     <div class="barra">
-      <button class="foco boton-redondo" id="album-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <button class="foco boton-redondo nav-atras" id="album-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
       <h2>Mis estampas</h2>
       <span></span>
     </div>
@@ -77,7 +88,7 @@
   <!-- Papás -->
   <section id="papas" class="pantalla">
     <div class="barra">
-      <button class="foco boton-redondo" id="papas-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <button class="foco boton-redondo nav-atras" id="papas-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
       <h2>Para papás</h2>
       <span></span>
     </div>
@@ -85,16 +96,25 @@
       <button class="foco ajuste" id="aj-letra"></button>
       <button class="foco ajuste" id="aj-voz"></button>
       <button class="foco ajuste" id="aj-nivel"></button>
+      <button class="foco ajuste" id="aj-nombre"></button>
+      <button class="foco ajuste" id="aj-pin"></button>
       <button class="foco ajuste peligro" id="aj-borrar">Borrar progreso y estampas</button>
     </div>
-    <p class="nota">Con las flechas del control eliges, con OK aceptas y con ⬅ (Atrás) regresas.
-      Cada ronda tiene 5 preguntas; con 4 o más bien a la primera, el juego sube de nivel solo. OK sobre «Nivel» pone todos los juegos en el nivel siguiente.</p>
+    <p class="nota">Cada ronda tiene 5 preguntas; con 4 o más bien a la primera, el juego sube de nivel solo.
+      Los minijuegos piden el PIN y el tiempo que les das. Si olvidas el PIN: pulsa seguidos los botones
+      rojo, verde, amarillo y azul del control.</p>
   </section>
 
   <div id="confeti"></div>
+  <div id="aviso-sonido">Pulsa <b>OK</b> en el control de la TV para activar el sonido</div>
 </div>
 <script src="js/datos.js"></script>
 <script src="js/app.js"></script>
+<script src="js/sonido.js"></script>
+<script src="js/extra.js"></script>
+<script src="js/papas.js"></script>
+<script src="js/musica.js"></script>
+<script src="js/mini.js"></script>
 <script src="js/qrcode.js"></script>
 <script src="js/peerjs.min.js"></script>
 <script src="js/conexion.js"></script>

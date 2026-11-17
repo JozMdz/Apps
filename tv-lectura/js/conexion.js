@@ -100,27 +100,44 @@
   }
 
   /* ---------- Lo que se manda al celular ---------- */
-  var NAVEGACION = { volver: 'atras', 'album-volver': 'atras', 'papas-volver': 'atras', repetir: 'repetir' };
+  var ESTADOS = ['bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista'];
 
   function describir(e, i) {
     var d = { n: i };
-    var nombre = e.querySelector('.t-nombre');
-    var im = e.querySelector('img');
-    if (NAVEGACION[e.id]) d.nav = NAVEGACION[e.id];
-    else if (nombre) { d.texto = nombre.textContent; if (im) d.img = im.getAttribute('src'); }
-    else if (e.classList.contains('opcion') || e.classList.contains('estampa')) {
-      if (im) d.img = im.getAttribute('src'); else d.texto = e.textContent;
+    var cl = e.classList;
+    var imgs = e.querySelectorAll('img');
+    var color = e.getAttribute('data-color');
+    if (color) d.color = color;
+    if (cl.contains('nav-atras')) d.nav = 'atras';
+    else if (e.id === 'repetir') d.nav = 'repetir';
+    else if (cl.contains('altavoz-grande')) d.nav = 'escuchar';
+    else if (cl.contains('tarjeta')) {
+      d.tarjeta = true;
+      d.texto = e.querySelector('.t-nombre').textContent;
+      var ti = e.querySelector('.t-img');
+      if (ti) d.img = ti.getAttribute('src'); else d.abc = e.querySelector('.t-icono').textContent;
+    } else if (cl.contains('pad')) {
       d.grande = true;
+      d.pad = true;
+      d.texto = e.querySelector('.pad-nombre').textContent;
+    } else if (cl.contains('opcion') || cl.contains('estampa')) {
+      d.grande = true;
+      if (cl.contains('color')) d.circulo = true;
+      else if (imgs.length > 1) { d.img = imgs[0].getAttribute('src'); d.veces = imgs.length; }
+      else if (imgs.length) d.img = imgs[0].getAttribute('src');
+      else d.texto = e.textContent;
     } else {
       d.texto = e.textContent.replace(/\s+/g, ' ').trim();
-      if (im && !e.classList.contains('altavoz-grande')) d.icono = im.getAttribute('src');
-      if (e.classList.contains('altavoz-grande')) d.nav = 'escuchar';
+      if (imgs.length) d.icono = imgs[0].getAttribute('src');
     }
-    ['bien', 'mal', 'usada', 'bloqueada'].forEach(function (c) { if (e.classList.contains(c)) d[c] = true; });
-    if (e.classList.contains('tarjeta')) d.tarjeta = e.getAttribute('data-juego');
+    ESTADOS.forEach(function (c) { if (cl.contains(c)) d[c] = true; });
     if (e === window.LEO.enfocado()) d.foco = true;
     return d;
   }
+
+  // Cómo se acomodan los botones en el celular: lista, álbum o rejilla de N columnas.
+  var DISENO = { inicio: 'lista', menu: 'lista', papas: 'lista', fin: 'lista', minifin: 'lista', tiempo: 'lista',
+    album: 'album', pin: 'c3', escribir: 'c6', bateria: 'c2', teclado: 'c2', guitarra: 'c2' };
 
   var focosActuales = [];
   var ultimo = '';
@@ -129,7 +146,13 @@
     var p = window.LEO.pantalla();
     focosActuales = window.LEO.focos();
     var datos = { t: 'pantalla', id: p ? p.id : '', items: focosActuales.map(describir) };
-    if (p && p.id === 'fin') datos.titulo = document.getElementById('fin-mensaje').textContent || '¡Terminaste!';
+    if (p) {
+      var tit = p.querySelector('[data-cel-titulo]') || p.querySelector('.barra h2');
+      datos.titulo = p.id === 'fin' ? (document.getElementById('fin-mensaje').textContent || '¡Terminaste!')
+        : p.id === 'juego' ? '¡Mira la tele!' : p.id === 'inicio' ? 'Elige' : tit ? tit.textContent : '';
+      datos.diseno = p.getAttribute('data-cel') || DISENO[p.id] ||
+        (document.querySelectorAll('#opciones .foco').length > 6 ? 'c4' : 'c2');
+    }
     var json = JSON.stringify(datos);
     if (json === ultimo && !forzar) return;
     ultimo = json;

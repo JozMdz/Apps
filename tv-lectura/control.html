@@ -27,29 +27,44 @@
   #botones { display: grid; grid-template-columns: 1fr 1fr; grid-gap: 16px; }
   #botones.lista { grid-template-columns: 1fr; grid-gap: 12px; }
   #botones.album { grid-template-columns: repeat(4, 1fr); grid-gap: 10px; }
+  #botones.c1 { grid-template-columns: 1fr; }
+  #botones.c3 { grid-template-columns: repeat(3, 1fr); grid-gap: 12px; }
+  #botones.c4 { grid-template-columns: repeat(4, 1fr); grid-gap: 10px; }
+  #botones.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-gap: 6px; }
+  #botones.c6 button { min-width: 0; }
+  #botones.c6 button.ancho { grid-column: span 3; aspect-ratio: auto; min-height: 52px; }
+  #botones.c2g button { min-height: 38vh; font-size: 64px; background: #ffd600; }
   #botones button {
     border: 0; border-radius: 26px; background: #fff; font-family: inherit; font-weight: 700; color: var(--tinta);
     box-shadow: 0 6px 0 rgba(0,0,0,.15); display: flex; align-items: center; justify-content: center;
-    min-height: 60px; font-size: 24px; padding: 8px 16px; transition: transform .1s;
+    min-height: 60px; font-size: 24px; padding: 8px 16px; transition: transform .1s; flex-wrap: wrap;
   }
   #botones button:active { transform: scale(.94); }
-  #botones button.grande { aspect-ratio: 1 / 1; min-height: 140px; font-size: 64px; padding: 14px; }
+  #botones button.grande { aspect-ratio: 1 / 1; min-height: 120px; font-size: 60px; padding: 12px; }
+  #botones button.grande.largo { font-size: 30px; }
+  #botones button.grande.pad { font-size: 28px; }
   #botones button.grande img { width: 82%; height: 82%; }
-  #botones.album button { min-height: 0; padding: 8px; border-radius: 16px; }
+  #botones button.grande.varios img { width: 26%; height: auto; margin: 2%; }
+  #botones button .circulo { width: 76%; height: 76%; border-radius: 50%; border: 4px solid rgba(0,0,0,.18); display: block; }
+  #botones.album button, #botones.c4 button, #botones.c6 button { min-height: 0; padding: 6px; border-radius: 14px; }
+  #botones.c4 button.grande { font-size: 40px; }
+  #botones.c6 button { font-size: 24px; aspect-ratio: 1 / 1; padding: 0; }
+  #botones.c3 button { min-height: 76px; font-size: 34px; }
+  #botones.c3 button.grande, #botones.c3 button.grande.largo { min-height: 0; font-size: 30px; }
+  #botones.c1 button { min-height: 46vh; font-size: 56px; background: #ffd600; }
   #botones.album button img { width: 100%; height: 100%; }
   #botones button.tarjeta { justify-content: flex-start; font-size: 28px; min-height: 64px; }
   #botones button.tarjeta img { width: 50px; height: 50px; margin-right: 18px; }
-  #botones button.tarjeta .abc { width: 58px; margin-right: 18px; text-align: center; color: #c62828; font-size: 40px; }
+  #botones button.tarjeta .abc { min-width: 50px; margin-right: 18px; text-align: center; color: #c62828; font-size: 30px; }
   #botones button .icono { width: 30px; height: 30px; margin-right: 10px; }
   #botones button.foco { box-shadow: 0 0 0 6px var(--foco), 0 6px 0 rgba(0,0,0,.15); }
-  #botones button.bien { background: #c8e6c9; box-shadow: 0 0 0 6px #43a047; }
-  #botones button.mal { background: #ffcdd2; opacity: .6; animation: tiembla .4s; }
+  #botones button.bien { background: #c8e6c9 !important; box-shadow: 0 0 0 6px #43a047; }
+  #botones button.mal { background: #ffcdd2 !important; opacity: .6; animation: tiembla .4s; }
   #botones button.usada { visibility: hidden; }
+  #botones button.guia { box-shadow: 0 0 0 8px #fff, 0 0 30px 10px #fff; }
   #botones button.bloqueada img { filter: brightness(0); opacity: .2; }
   #botones button.escuchar { grid-column: 1 / -1; background: #ffe0b2; font-size: 30px; }
   #botones button.escuchar img { width: 44px; height: 44px; margin-right: 12px; }
-  .t-letras { background: #ffcdd2 !important; } .t-escucha { background: #ffe0b2 !important; }
-  .t-silabas { background: #c8e6c9 !important; } .t-palabras { background: #bbdefb !important; } .t-arma { background: #e1bee7 !important; }
   #titulo { color: #fff; font-size: 30px; text-align: center; margin: 0 0 12px; flex-shrink: 0; text-shadow: 0 3px 0 #0277bd; min-height: 10px; }
   #aviso { color: #fff; font-size: 26px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,.35); line-height: 1.4; }
   @keyframes tiembla { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
