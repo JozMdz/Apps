@@ -21,6 +21,9 @@ Convierte un PDF o un archivo Markdown en un "audiolibro" navegable, usando la v
 - **Índice automático**: sale de los títulos del documento (`#` en Markdown; en PDF, de los marcadores
   o del tamaño/negrita de la letra). Si no hay títulos, se divide en "Parte 1, 2, 3…".
   Tocar un apartado empieza a leerlo.
+- **Puntos intermedios**: dentro de los apartados largos la app añade sola puntos cada pocos
+  párrafos (con las primeras palabras del párrafo), para volver a un lugar cercano sin regresar
+  hasta el título.
 - **Recuerda dónde te quedaste** en cada documento; el botón **Continuar** retoma el último.
 - **Controles**: apartado anterior/siguiente, frase anterior/siguiente, pausa y velocidad.
   Funcionan también desde la pantalla de bloqueo, la barra de avisos y los botones del volante,
@@ -30,6 +33,12 @@ Convierte un PDF o un archivo Markdown en un "audiolibro" navegable, usando la v
 - **Limpieza para escuchar**: quita símbolos de Markdown, direcciones web, bloques de código,
   números de página y encabezados repetidos; une los renglones del PDF en frases completas.
 - **Sin permisos especiales**: solo pide (una vez) el de notificaciones para mostrar los controles.
+
+### Cómo escribir un documento para que el índice salga bien
+
+En Markdown: un solo `#` para el título del documento, `##` para cada apartado y `###` para los
+subapartados (uno cada 3 a 5 párrafos). Los títulos deben decir de qué trata la parte, porque se leen
+en voz alta al entrar. Mejor frases completas que tablas o listas largas.
 
 Limitaciones: los PDF escaneados (imagen sin texto) no se pueden leer; en PDF con columnas o tablas
 el orden puede salir mal. Markdown es lo más confiable.

@@ -16,11 +16,11 @@ class MarkdownParserTest {
         assertEquals("Apuntes de regresión espacial", doc.title)
         assertEquals(
             listOf("Apuntes de regresión espacial", "1. Autocorrelación espacial", "1.1 Índice de Moran", "Conclusiones"),
-            doc.sections.map { it.title },
+            doc.sections.filter { !it.mark }.map { it.title },
         )
-        assertEquals(listOf(1, 2, 3, 2), doc.sections.map { it.level })
+        assertEquals(listOf(1, 2, 3, 2), doc.sections.filter { !it.mark }.map { it.level })
         // El título se lee como primera frase de su apartado.
-        for (s in doc.sections) assertTrue(doc.sentences[s.start].startsWith(s.title))
+        for (s in doc.sections.filter { !it.mark }) assertTrue(doc.sentences[s.start].startsWith(s.title))
     }
 
     @Test
@@ -62,9 +62,35 @@ class MarkdownParserTest {
         val plain = DocBuilder.build(MarkdownParser.parse(text), "notas", Locale("es"))
         assertEquals("notas", plain.title)
         assertEquals(80, plain.sentences.size)
-        assertEquals(listOf("Parte 1", "Parte 2", "Parte 3"), plain.sections.map { it.title })
+        assertEquals(listOf("Parte 1", "Parte 2", "Parte 3"), plain.sections.filter { !it.mark }.map { it.title })
         assertFalse(plain.sections[0].titleSpoken)
-        assertEquals(1, plain.sectionAt(45))
-        assertEquals(29, plain.sectionEnd(0))
+        assertEquals("Parte 2", plain.headingAt(45)?.title)
+        // En listas de frases cortas los puntos intermedios quedan espaciados, no cada 3 frases.
+        val marks = plain.sections.filter { it.mark }
+        assertTrue("hay puntos intermedios", marks.isNotEmpty())
+        assertTrue("no demasiados: ${marks.size}", marks.size <= 16)
+    }
+
+    @Test
+    fun apartadosLargosTienenPuntosIntermedios() {
+        val paragraph = "Esta idea se explica con calma en varias frases seguidas. " +
+            "La segunda frase agrega un detalle necesario para entenderla bien. " +
+            "La tercera cierra la idea con un ejemplo concreto y fácil de recordar."
+        val text = buildString {
+            append("# 1. Primer tema\n\n")
+            for (i in 1..4) append("Nota $i del primer tema\n\n$paragraph\n\n")
+            append("# 2. Segundo tema\n\nUn apartado corto no necesita puntos intermedios.\n")
+        }
+        val doc = DocBuilder.build(MarkdownParser.parse(text), "mis apuntes", Locale("es"))
+        // Con el nivel más alto usado para los apartados, el nombre del archivo es el título.
+        assertEquals("mis apuntes", doc.title)
+        assertEquals(listOf("1. Primer tema", "2. Segundo tema"), doc.sections.filter { !it.mark }.map { it.title })
+        val marks = doc.sections.filter { it.mark }
+        println(doc.sections.joinToString("\n") { "${"  ".repeat(it.level - 1)}[${it.start}] ${it.title}" })
+        assertEquals(listOf("Nota 2 del primer tema.", "Nota 3 del primer tema.", "Nota 4 del primer tema."), marks.map { it.title })
+        assertTrue(marks.all { it.level == 2 && !it.titleSpoken })
+        // El punto intermedio pertenece a su apartado.
+        assertEquals("1. Primer tema", doc.headingAt(marks[1].start + 1)?.title)
+        assertEquals("2. Segundo tema", doc.headingAt(doc.sentences.lastIndex)?.title)
     }
 }

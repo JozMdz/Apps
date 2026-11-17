@@ -7,6 +7,11 @@ class Section(
     val start: Int,
     /** true si la primera frase del apartado es su propio título (se lee al entrar). */
     val titleSpoken: Boolean,
+    /**
+     * Punto intermedio creado por la app dentro de un apartado largo (no es un título del documento).
+     * Su [title] son las primeras palabras del párrafo donde empieza.
+     */
+    val mark: Boolean = false,
 )
 
 /** Un documento listo para escuchar: frases en orden y el índice de apartados. */
@@ -25,6 +30,13 @@ class Doc(
             if (sections[mid].start <= sentence) lo = mid else hi = mid - 1
         }
         return lo
+    }
+
+    /** Título del apartado "de verdad" (no punto intermedio) al que pertenece la frase [sentence]. */
+    fun headingAt(sentence: Int): Section? {
+        var i = sectionAt(sentence)
+        while (i > 0 && sections[i].mark) i--
+        return sections.getOrNull(i)
     }
 
     /** Posición de la última frase del apartado [section]. */

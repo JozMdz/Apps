@@ -115,7 +115,7 @@ class LibraryActivity : Activity(), Player.Listener {
         val key = "${entry.id}:$at"
         return sectionNames.getOrPut(key) {
             val doc = if (Player.doc?.id == entry.id) Player.doc else Library.load(this, entry.id)
-            doc?.sections?.getOrNull(doc.sectionAt(at))?.title ?: ""
+            doc?.headingAt(at)?.title ?: ""
         }
     }
 

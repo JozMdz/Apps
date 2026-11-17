@@ -166,7 +166,9 @@ object Player {
         notifyListeners()
         val isHeading = sectionInfo != null && sectionInfo.start == index && sectionInfo.titleSpoken
         // Al saltar a una "Parte N" (documentos sin títulos) se dice su nombre para ubicarse.
-        val text = if (announceSection && sectionInfo != null && sectionInfo.start == index && !sectionInfo.titleSpoken) {
+        val text = if (announceSection && sectionInfo != null && sectionInfo.start == index &&
+            !sectionInfo.titleSpoken && !sectionInfo.mark
+        ) {
             "${sectionInfo.title}. $sentence"
         } else {
             sentence

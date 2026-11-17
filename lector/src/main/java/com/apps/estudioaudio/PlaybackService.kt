@@ -109,7 +109,7 @@ class PlaybackService : Service(), Player.Listener {
         }
         val playing = Player.state == Player.State.PLAYING
         setNoisyReceiver(playing)
-        val section = doc.sections.getOrNull(Player.section)
+        val section = doc.headingAt(Player.index)
 
         session.setMetadata(
             MediaMetadata.Builder()
@@ -195,7 +195,7 @@ class PlaybackService : Service(), Player.Listener {
     private fun buildNotification(): Notification {
         val doc = Player.doc
         val playing = Player.state == Player.State.PLAYING
-        val section = doc?.sections?.getOrNull(Player.section)
+        val section = doc?.headingAt(Player.index)
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_headset)
             .setContentTitle(section?.title ?: doc?.title ?: getString(R.string.app_name))

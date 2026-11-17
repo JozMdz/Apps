@@ -129,18 +129,25 @@ class AppSmokeTest {
         // Controles de apartado y de frase (en pausa solo mueven la posición).
         val sections = player.findViewById<ListView>(R.id.sections)
         assertEquals(pdf.sections.size, sections.adapter.count)
-        Player.jumpToSection(2)
+        val second = pdf.sections.indexOfFirst { it.title == "2. Gigantes gaseosos, lunas y anillos" }
+        Player.jumpToSection(second)
         Player.pause()
         idle()
-        val base = pdf.sections[2].start
+        val base = pdf.sections[second].start
         assertEquals(base, Player.index)
         assertEquals("2. Gigantes gaseosos, lunas y anillos", player.findViewById<TextView>(R.id.now_section).text.toString())
         player.findViewById<View>(R.id.next_sentence).performClick()
         assertEquals(base + 1, Player.index)
         player.findViewById<View>(R.id.next_section).performClick()
-        assertEquals(pdf.sections[3].start, Player.index)
+        assertEquals(pdf.sections[second + 1].start, Player.index)
         player.findViewById<View>(R.id.previous_section).performClick()
-        assertEquals(pdf.sections[2].start, Player.index)
+        assertEquals(base, Player.index)
+        // Desde un punto intermedio, el título que se muestra sigue siendo el del apartado.
+        val mark = pdf.sections.indexOfFirst { it.mark }
+        Player.jumpToSection(mark)
+        Player.pause()
+        assertEquals(pdf.sections[mark].start, Player.index)
+        assertEquals("1. El Sol y los planetas interiores", player.findViewById<TextView>(R.id.now_section).text.toString())
         assertEquals(Player.index, Library.position(context, pdf.id))
         player.findViewById<Button>(R.id.speed).performClick()
         assertEquals("1.25x", player.findViewById<Button>(R.id.speed).text.toString().replace(',', '.'))
@@ -158,7 +165,7 @@ class AppSmokeTest {
         assertEquals(0, Library.position(context, pdf.id))
 
         // --- La biblioteca muestra el avance y "Continuar"
-        Player.jumpToSection(3)
+        Player.jumpToSection(pdf.sections.lastIndex)
         Player.pause()
         val library2 = Robolectric.buildActivity(LibraryActivity::class.java).setup().get()
         idle()

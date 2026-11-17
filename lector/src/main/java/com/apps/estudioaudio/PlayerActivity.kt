@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -125,7 +126,7 @@ class PlayerActivity : Activity(), Player.Listener {
         val total = doc.sentences.size
         val percent = if (total > 1) index * 100 / (total - 1) else 0
 
-        nowSection.text = doc.sections.getOrNull(sectionIndex)?.title ?: doc.title
+        nowSection.text = doc.headingAt(index)?.title ?: doc.title
         nowSentence.text = doc.sentences.getOrNull(index).orEmpty()
         position.text = getString(R.string.position, index + 1, total, percent)
         progress.max = (total - 1).coerceAtLeast(1)
@@ -157,7 +158,11 @@ class PlayerActivity : Activity(), Player.Listener {
             val indent = (16 + (section.level - 1).coerceIn(0, 4) * 18) * density
             view.setPaddingRelative(indent.toInt(), view.paddingTop, view.paddingEnd, view.paddingBottom)
             view.text = if (current) "▶  ${section.title}" else section.title
-            view.setTypeface(null, if (current || section.level == 1) Typeface.BOLD else Typeface.NORMAL)
+            // Los títulos del documento van en negrita; los puntos intermedios, más discretos.
+            view.setTypeface(null, if (section.mark) Typeface.NORMAL else Typeface.BOLD)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (section.mark) 15f else 17f)
+            view.minHeight = ((if (section.mark) 48 else 56) * density).toInt()
+            view.alpha = if (section.mark && !current) 0.75f else 1f
             view.setBackgroundColor(if (current) getColor(R.color.current_row) else 0)
             return view
         }

@@ -42,9 +42,14 @@ class PdfImportTest {
                 "2. Gigantes gaseosos, lunas y anillos",
                 "3. Repaso y cierre",
             ),
-            doc.sections.map { it.title },
+            doc.sections.filter { !it.mark }.map { it.title },
         )
-        assertEquals(listOf(1, 2, 2, 2), doc.sections.map { it.level })
+        assertEquals(listOf(1, 2, 2, 2), doc.sections.filter { !it.mark }.map { it.level })
+        // Puntos intermedios dentro del apartado largo, en las líneas de «Nota».
+        assertEquals(
+            listOf("Nota: Mapa. Fig. 1", "Nota: Tabla de distancias. Fig. 2", "Nota: Línea de tiempo. Fig. 3"),
+            doc.sections.filter { it.mark }.map { it.title },
+        )
         val all = doc.sentences.joinToString("\n")
         assertFalse("el pie de página no se lee", all.contains("Página"))
         // Los renglones del párrafo se unen en frases completas.

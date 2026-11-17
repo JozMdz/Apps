@@ -48,12 +48,12 @@ object Library {
         val json = JSONObject().put("title", doc.title).put("sentences", JSONArray(doc.sentences))
         val sections = JSONArray()
         for (s in doc.sections) {
-            sections.put(JSONObject().put("t", s.title).put("l", s.level).put("s", s.start).put("sp", s.titleSpoken))
+            sections.put(JSONObject().put("t", s.title).put("l", s.level).put("s", s.start).put("sp", s.titleSpoken).put("m", s.mark))
         }
         json.put("sections", sections)
         File(dir(context), "${doc.id}.json").writeText(json.toString())
 
-        val entry = Entry(doc.id, doc.title, System.currentTimeMillis(), doc.sentences.size, doc.sections.size)
+        val entry = Entry(doc.id, doc.title, System.currentTimeMillis(), doc.sentences.size, doc.sections.count { !it.mark })
         writeEntries(context, listOf(entry) + entries(context).filter { it.id != doc.id })
     }
 
@@ -68,7 +68,7 @@ object Library {
             val sectionsJson = json.getJSONArray("sections")
             val sections = List(sectionsJson.length()) {
                 val o = sectionsJson.getJSONObject(it)
-                Section(o.getString("t"), o.getInt("l"), o.getInt("s"), o.optBoolean("sp", true))
+                Section(o.getString("t"), o.getInt("l"), o.getInt("s"), o.optBoolean("sp", true), o.optBoolean("m", false))
             }
             Doc(id, json.getString("title"), sentences, sections)
         } catch (e: Exception) {
