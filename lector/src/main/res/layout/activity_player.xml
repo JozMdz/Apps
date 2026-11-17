@@ -5,24 +5,51 @@
     android:fitsSystemWindows="true"
     android:orientation="vertical">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="2dp"
-        android:text="@string/index_title"
-        android:textAllCaps="true"
-        android:textColor="@color/accent"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal">
 
-    <ListView
-        android:id="@+id/sections"
+        <Button
+            android:id="@+id/tab_text"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="@string/tab_text"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/tab_index"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="@string/tab_index"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <!-- Texto completo, como la letra de una canción: la frase actual resaltada; tocar una salta a ella. -->
+        <ListView
+            android:id="@+id/text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:divider="@null"
+            android:paddingTop="8dp"
+            android:paddingBottom="120dp" />
+
+        <ListView
+            android:id="@+id/sections"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

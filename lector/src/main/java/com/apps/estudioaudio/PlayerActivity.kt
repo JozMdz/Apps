@@ -8,11 +8,13 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.ImageButton
@@ -30,9 +32,20 @@ class PlayerActivity : Activity(), Player.Listener {
         const val EXTRA_FROM_START = "from_start"
         private const val MENU_VOICE = 1
         private const val MENU_CLOSE = 2
+        private const val MANUAL_SCROLL_HOLD_MS = 6000L
+        private const val NEVER = Long.MIN_VALUE / 2
     }
 
     private lateinit var sections: ListView
+    private lateinit var text: ListView
+    private lateinit var tabText: Button
+    private lateinit var tabIndex: Button
+    private var showingText = true
+    private var shownIndex = -1
+    /** Nivel de título de cada frase (0 = texto normal), para dibujar los títulos distintos. */
+    private var headingLevel = IntArray(0)
+    /** Momento del último desplazamiento manual: mientras se explora el texto no se recentra solo. */
+    private var touchedAt = NEVER
     private lateinit var nowSection: TextView
     private lateinit var nowSentence: TextView
     private lateinit var position: TextView
@@ -55,8 +68,30 @@ class PlayerActivity : Activity(), Player.Listener {
         playPause = findViewById(R.id.play_pause)
         speed = findViewById(R.id.speed)
 
+        text = findViewById(R.id.text)
+        tabText = findViewById(R.id.tab_text)
+        tabIndex = findViewById(R.id.tab_index)
+
         sections.adapter = adapter
-        sections.setOnItemClickListener { _, _, index, _ -> Player.jumpToSection(index) }
+        sections.setOnItemClickListener { _, _, index, _ ->
+            Player.jumpToSection(index)
+            showTab(text = true) // tras elegir apartado se vuelve al texto, ya en ese lugar
+        }
+        text.adapter = textAdapter
+        text.setOnItemClickListener { _, _, index, _ ->
+            touchedAt = NEVER
+            Player.jumpToSentence(index)
+        }
+        text.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScrollStateChanged(view: AbsListView, state: Int) {
+                if (state == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) touchedAt = SystemClock.elapsedRealtime()
+            }
+
+            override fun onScroll(view: AbsListView, first: Int, visible: Int, total: Int) = Unit
+        })
+        tabText.setOnClickListener { showTab(text = true) }
+        tabIndex.setOnClickListener { showTab(text = false) }
+        showTab(getSharedPreferences("avance", MODE_PRIVATE).getBoolean("_vista_texto", true), remember = false)
         playPause.setOnClickListener { Player.toggle() }
         speed.setOnClickListener { Player.cycleRate() }
         findViewById<View>(R.id.previous_section).setOnClickListener { Player.previousSection() }
@@ -118,8 +153,14 @@ class PlayerActivity : Activity(), Player.Listener {
         if (shownDoc != doc.id) {
             shownDoc = doc.id
             shownSection = -1
+            shownIndex = -1
             title = doc.title
+            headingLevel = IntArray(doc.sentences.size)
+            for (section in doc.sections) {
+                if (section.titleSpoken && !section.mark) headingLevel[section.start] = section.level
+            }
             adapter.notifyDataSetChanged()
+            textAdapter.notifyDataSetChanged()
         }
         val index = Player.index
         val sectionIndex = Player.section
@@ -137,11 +178,76 @@ class PlayerActivity : Activity(), Player.Listener {
         playPause.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
         playPause.contentDescription = getString(if (playing) R.string.pause else R.string.play)
 
+        if (index != shownIndex) {
+            val first = shownIndex < 0
+            shownIndex = index
+            textAdapter.notifyDataSetChanged()
+            centerText(animated = !first)
+        }
+
         if (sectionIndex != shownSection) {
             shownSection = sectionIndex
             adapter.notifyDataSetChanged()
             // Deja el apartado actual a la vista, con uno antes para dar contexto.
             sections.post { sections.smoothScrollToPositionFromTop((sectionIndex - 1).coerceAtLeast(0), 0, 200) }
+        }
+    }
+
+    private fun showTab(text: Boolean, remember: Boolean = true) {
+        showingText = text
+        this.text.visibility = if (text) View.VISIBLE else View.GONE
+        sections.visibility = if (text) View.GONE else View.VISIBLE
+        // En la vista de texto la frase actual ya se ve resaltada: no se repite en el panel de abajo.
+        nowSentence.visibility = if (text) View.GONE else View.VISIBLE
+        for ((button, selected) in listOf(tabText to text, tabIndex to !text)) {
+            button.setTextColor(getColor(if (selected) R.color.accent else R.color.tab_idle))
+            button.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
+        }
+        if (remember) getSharedPreferences("avance", MODE_PRIVATE).edit().putBoolean("_vista_texto", text).apply()
+        if (text) {
+            touchedAt = NEVER
+            centerText(animated = false)
+        } else if (shownSection >= 0) {
+            sections.post { sections.setSelection((shownSection - 1).coerceAtLeast(0)) }
+        }
+    }
+
+    /** Deja la frase actual a un tercio de la pantalla, salvo que se esté explorando el texto a mano. */
+    private fun centerText(animated: Boolean) {
+        if (shownIndex < 0) return
+        if (SystemClock.elapsedRealtime() - touchedAt < MANUAL_SCROLL_HOLD_MS) return
+        text.post {
+            val offset = text.height / 3
+            if (animated && kotlin.math.abs(shownIndex - text.firstVisiblePosition) < 30) {
+                text.smoothScrollToPositionFromTop(shownIndex, offset, 300)
+            } else {
+                text.setSelectionFromTop(shownIndex, offset)
+            }
+        }
+    }
+
+    private val textAdapter = object : BaseAdapter() {
+        override fun getCount() = Player.doc?.sentences?.size ?: 0
+        override fun getItem(position: Int) = Player.doc?.sentences?.getOrNull(position)
+        override fun getItemId(position: Int) = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = (convertView ?: layoutInflater.inflate(R.layout.row_sentence, parent, false)) as TextView
+            val sentence = Player.doc?.sentences?.getOrNull(position) ?: return view
+            val current = position == shownIndex
+            val level = headingLevel.getOrElse(position) { 0 }
+            val density = resources.displayMetrics.density
+            view.text = sentence
+            // La frase que se está leyendo resalta; el resto queda atenuado, como la letra de una canción.
+            view.alpha = if (current) 1f else 0.5f
+            view.setTypeface(null, if (current || level > 0) Typeface.BOLD else Typeface.NORMAL)
+            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (level == 1) 22f else if (level > 1) 20f else 19f)
+            view.setTextColor(getColor(if (level > 0) R.color.accent else R.color.text))
+            view.setBackgroundColor(if (current) getColor(R.color.current_row) else 0)
+            // Aire antes de cada título para que se distinga dónde empieza un apartado.
+            val top = if (level > 0 && position > 0) 26 else 9
+            view.setPaddingRelative(view.paddingStart, (top * density).toInt(), view.paddingEnd, view.paddingBottom)
+            return view
         }
     }
 

@@ -154,6 +154,25 @@ class AppSmokeTest {
         idle()
         screenshot(player.window.decorView, "2-reproductor")
 
+        // Vista de texto (tipo letra de canción): tocar una frase salta a ella y lee desde ahí.
+        val text = player.findViewById<ListView>(R.id.text)
+        assertEquals(View.VISIBLE, text.visibility)
+        assertEquals(pdf.sentences.size, text.adapter.count)
+        val target = pdf.sections[second].start + 2
+        text.performItemClick(text.adapter.getView(target, null, text), target, target.toLong())
+        assertEquals(Player.State.PLAYING, Player.state)
+        assertEquals(target, Player.index)
+        Player.pause()
+        idle()
+        assertEquals(1f, text.adapter.getView(target, null, text).alpha, 0.01f)
+        assertEquals(0.5f, text.adapter.getView(target + 1, null, text).alpha, 0.01f)
+        screenshot(player.window.decorView, "2b-texto")
+        player.findViewById<View>(R.id.tab_index).performClick()
+        assertEquals(View.GONE, text.visibility)
+        assertEquals(View.VISIBLE, sections.visibility)
+        idle()
+        screenshot(player.window.decorView, "2c-indice")
+
         // Tocar un apartado del índice salta a él y lee.
         sections.performItemClick(sections.adapter.getView(1, null, sections), 1, 1)
         assertEquals(Player.State.PLAYING, Player.state)

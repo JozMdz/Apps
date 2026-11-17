@@ -6,4 +6,6 @@
     <color name="control">#546E7A</color>
     <color name="current_row">#1A00796B</color>
     <color name="panel">#F2F5F4</color>
+    <color name="text">#DE000000</color>
+    <color name="tab_idle">#8A000000</color>
 </resources>

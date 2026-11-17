@@ -23,7 +23,8 @@
     <string name="import_empty">El documento no tiene texto para leer.</string>
 
     <string name="position">Frase %1$d de %2$d · %3$d %%</string>
-    <string name="index_title">Índice</string>
+    <string name="tab_text">Texto</string>
+    <string name="tab_index">Índice</string>
     <string name="finished">Fin del documento</string>
     <string name="voice_unavailable">El motor de texto a voz no está disponible</string>
     <string name="audio_busy">El audio está ocupado (¿una llamada?)</string>

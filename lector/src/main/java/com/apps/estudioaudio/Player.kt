@@ -126,6 +126,18 @@ object Player {
         moveTo(target.start, announceSection = true)
     }
 
+    /** Salta a la frase [sentence] (tocada en el texto) y lee desde ahí. */
+    fun jumpToSentence(sentence: Int) {
+        val d = doc ?: return
+        if (sentence !in d.sentences.indices) return
+        if (state != State.PLAYING) {
+            if (!requestFocus()) return
+            state = State.PLAYING
+            claimMediaButtons()
+        }
+        moveTo(sentence, announceSection = false)
+    }
+
     private fun moveTo(target: Int, announceSection: Boolean) {
         val d = doc ?: return
         index = target.coerceIn(0, d.sentences.lastIndex)

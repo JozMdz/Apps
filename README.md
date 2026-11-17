@@ -24,6 +24,8 @@ Convierte un PDF o un archivo Markdown en un "audiolibro" navegable, usando la v
 - **Puntos intermedios**: dentro de los apartados largos la app añade sola puntos cada pocos
   párrafos (con las primeras palabras del párrafo), para volver a un lugar cercano sin regresar
   hasta el título.
+- **Vista de texto tipo letra de canción**: se ve el documento completo con la frase que se está
+  leyendo resaltada y centrada; tocar cualquier frase salta a ella. El índice queda en otra pestaña.
 - **Recuerda dónde te quedaste** en cada documento; el botón **Continuar** retoma el último.
 - **Controles**: apartado anterior/siguiente, frase anterior/siguiente, pausa y velocidad.
   Funcionan también desde la pantalla de bloqueo, la barra de avisos y los botones del volante,
