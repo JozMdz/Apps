@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leo y Juego</title>
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div id="escenario">
+  <div id="nubes"><span></span><span></span><span></span></div>
+
+  <!-- Inicio -->
+  <section id="inicio" class="pantalla">
+    <h1 class="titulo">Leo y Juego</h1>
+    <div class="menu">
+      <button class="foco tarjeta t-letras" data-juego="letras">
+        <span class="t-icono">Aa</span><span class="t-nombre">Letras</span><span class="t-nivel"></span>
+      </button>
+      <button class="foco tarjeta t-escucha" data-juego="escucha">
+        <span class="t-icono"><img class="t-img" src="img/_altavoz.svg" alt=""></span><span class="t-nombre">Escucha</span><span class="t-nivel"></span>
+      </button>
+      <button class="foco tarjeta t-silabas" data-juego="silabas">
+        <span class="t-icono">ma·no</span><span class="t-nombre">Sílabas</span><span class="t-nivel"></span>
+      </button>
+      <button class="foco tarjeta t-palabras" data-juego="palabras">
+        <span class="t-icono"><img class="t-img" src="img/_libro.svg" alt=""></span><span class="t-nombre">Palabras</span><span class="t-nivel"></span>
+      </button>
+      <button class="foco tarjeta t-arma" data-juego="arma">
+        <span class="t-icono"><img class="t-img" src="img/_rompecabezas.svg" alt=""></span><span class="t-nombre">Arma</span><span class="t-nivel"></span>
+      </button>
+    </div>
+    <div class="abajo">
+      <button class="foco boton-chico" id="ir-album"><img class="ico" src="img/_estrella.svg" alt=""> Mis estampas <b id="cuenta-estampas"></b></button>
+      <button class="foco boton-chico" id="ir-papas"><img class="ico" src="img/_engrane.svg" alt=""> Papás</button>
+    </div>
+  </section>
+
+  <!-- Juego -->
+  <section id="juego" class="pantalla">
+    <div class="barra">
+      <button class="foco boton-redondo" id="volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <div id="progreso"></div>
+      <button class="foco boton-redondo" id="repetir" aria-label="Escuchar otra vez"><img class="ico-grande" src="img/_altavoz.svg" alt=""></button>
+    </div>
+    <div id="pregunta"></div>
+    <div id="opciones"></div>
+  </section>
+
+  <!-- Fin de ronda -->
+  <section id="fin" class="pantalla">
+    <h2 id="fin-titulo">¡Terminaste!</h2>
+    <div id="fin-estrellas"></div>
+    <div id="fin-premio"></div>
+    <p id="fin-mensaje"></p>
+    <div class="fila-botones">
+      <button class="foco boton-grande" id="otra-vez"><svg viewBox="0 0 24 24" width="50" height="50" style="vertical-align:-6px"><path d="M7 4v16l13-8z" fill="#263238"/></svg> Otra vez</button>
+      <button class="foco boton-grande secundario" id="fin-inicio"><img class="ico" src="img/_casa.svg" alt=""> Inicio</button>
+    </div>
+  </section>
+
+  <!-- Álbum -->
+  <section id="album" class="pantalla">
+    <div class="barra">
+      <button class="foco boton-redondo" id="album-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <h2>Mis estampas</h2>
+      <span></span>
+    </div>
+    <div id="album-palabra"></div>
+    <div id="album-rejilla"></div>
+  </section>
+
+  <!-- Papás -->
+  <section id="papas" class="pantalla">
+    <div class="barra">
+      <button class="foco boton-redondo" id="papas-volver" aria-label="Volver"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z" fill="#263238"/></svg></button>
+      <h2>Para papás</h2>
+      <span></span>
+    </div>
+    <div class="ajustes">
+      <button class="foco ajuste" id="aj-letra"></button>
+      <button class="foco ajuste" id="aj-voz"></button>
+      <button class="foco ajuste" id="aj-nivel"></button>
+      <button class="foco ajuste peligro" id="aj-borrar">Borrar progreso y estampas</button>
+    </div>
+    <p class="nota">Con las flechas del control eliges, con OK aceptas y con ⬅ (Atrás) regresas.
+      Cada ronda tiene 5 preguntas; con 4 o más bien a la primera, el juego sube de nivel solo. OK sobre «Nivel» pone todos los juegos en el nivel siguiente.</p>
+  </section>
+
+  <div id="confeti"></div>
+</div>
+<script src="js/datos.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

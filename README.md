@@ -1,10 +1,11 @@
-# Apps de lectura en voz alta
+# Apps de lectura
 
-Dos apps Android independientes, pensadas para escuchar texto mientras se maneja:
+Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV LG para aprender a leer:
 
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
+| **Leo y Juego** (TV LG) | Juegos para que un niño aprenda a leer en español: letras, sílabas y palabras, con voz y estampas de premio. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.0.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -145,3 +146,64 @@ Los APK quedan en `app/build/outputs/apk/release/` y `lector/build/outputs/apk/r
   (apps de bancos, contenido con DRM).
 - Si el botón de accesibilidad del sistema está asignado a esta app, el botón flotante propio se oculta
   para no duplicarlo.
+
+---
+
+# Leo y Juego (TV LG webOS)
+
+Juego para que un niño aprenda a leer en español, hecho para la tele LG y para jugarse con el
+control remoto (flechas + OK, o el puntero del Magic Remote). Todo funciona sin internet una vez
+instalado: las voces (español de México) y los dibujos vienen dentro de la app.
+
+**Juegos** (cada ronda tiene 5 preguntas; con 4 o más bien a la primera sube de nivel solo):
+
+| Juego | Qué hace | Niveles |
+| --- | --- | --- |
+| **Letras** | Ve la letra (y la oye) y elige el dibujo que empieza con ella. Al pasar por cada dibujo se oye su nombre. | 1: vocales · 2: + m p s l t d n · 3: todas |
+| **Escucha** | Oye una sílaba y elige cómo se escribe. | 1: ma/me/mo · 2: ma/pa/sa · 3: mezcladas |
+| **Sílabas** | Completa la palabra del dibujo con la sílaba que falta. | 1: palabras cortas, falta la primera · 2: falta cualquiera · 3: palabras largas |
+| **Palabras** | Lee la palabra (sin ayuda de voz) y elige su dibujo. | 1: palabras fáciles · 2: dibujos parecidos · 3: palabras largas |
+| **Arma** | Elige las sílabas en orden para formar la palabra del dibujo. | 1: 2 sílabas · 2: 3 sílabas · 3: largas y más sílabas de sobra |
+
+- **Estampas**: cada ronda con 3 estrellas o más regala una estampa para el álbum (*Mis estampas*).
+- **Para papás**: letra en minúsculas o MAYÚSCULAS, voz encendida/apagada, cambiar el nivel y borrar el progreso.
+- Botón 🔊 (o el botón rojo del control) repite la instrucción. Atrás regresa al inicio; en el inicio cierra la app.
+
+## Cómo ponerla en la TV
+
+**Opción A — Abrirla en el navegador de la TV (lo más fácil).** Cuando este código esté en la rama
+principal del repositorio y GitHub Pages esté activado (*Settings → Pages → Source: GitHub Actions*),
+el juego queda en `https://jozmdz.github.io/Apps/`. En la TV abre el **Navegador web** (el globo de la
+barra de apps), entra a esa dirección y agrégala a favoritos o fíjala en la página de inicio.
+La primera vez necesita internet; el progreso se guarda en la TV.
+
+**Opción B — Instalarla como app (ícono propio en la barra de la TV).**
+1. En la TV, instala la app **Developer Mode** desde la LG Content Store e inicia sesión con una
+   cuenta gratuita de [LG Developer](https://webostv.developer.lge.com/). Activa *Dev Mode Status* y
+   *Key Server*; la TV se reinicia y muestra su dirección IP.
+2. En una computadora en la misma red: `npm install -g @webos-tools/cli`, luego
+   `ares-setup-device` (agrega la TV con su IP, puerto 9922) y `ares-novacom --device tv --getkey`
+   (pide la frase que aparece en la app Developer Mode).
+3. Descarga el `.ipk` de **Actions → App para TV LG → Artifacts** (o créalo con
+   `ares-package tv-lectura -e herramientas`) e instálalo: `ares-install --device tv com.jozmdz.leoyjuego_1.0.0_all.ipk`.
+
+El modo desarrollador dura 50 horas; para que la app no se borre, abre la app *Developer Mode*
+de vez en cuando y pulsa **Extend**.
+
+## Agregar palabras o cambiar las voces
+
+Las palabras están en `tv-lectura/herramientas/palabras.txt` (`palabra | sí-la-bas | emoji`).
+Después de editarlo hay que volver a generar dibujos y voces:
+
+```
+pip install piper-tts                      # y tener ffmpeg
+npm pack @twemoji/svg && tar xzf twemoji-svg-*.tgz      # dibujos en ./package
+# Voz: es_MX-claude-high (.onnx y .onnx.json) de los modelos de Piper
+python3 tv-lectura/herramientas/generar.py --twemoji package --voz es_MX-claude-high.onnx
+```
+
+Para probarla en la computadora: `cd tv-lectura && python3 -m http.server` y abrir
+`http://localhost:8000` (las flechas, Enter y Esc hacen de control remoto).
+
+Créditos: dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letra
+[Andika](https://software.sil.org/andika/) (SIL OFL), voz [Piper](https://github.com/rhasspy/piper) es_MX "claude".

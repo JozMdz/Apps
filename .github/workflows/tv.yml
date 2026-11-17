@@ -1,0 +1,56 @@
+name: App para TV LG (Leo y Juego)
+
+on:
+  push:
+    paths:
+      - 'tv-lectura/**'
+      - '.github/workflows/tv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  empaquetar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Crear el paquete .ipk para webOS
+        run: |
+          npm install -g @webos-tools/cli@3.2.6
+          mkdir -p salida
+          ares-package tv-lectura -o salida -e herramientas
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leo-y-juego-ipk
+          path: salida/*.ipk
+
+      - name: Preparar la página web
+        run: |
+          mkdir -p sitio
+          rsync -a --exclude herramientas tv-lectura/ sitio/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sitio
+
+  # Publica el juego en GitHub Pages (solo desde la rama principal) para abrirlo
+  # en el navegador de la TV sin instalar nada.
+  publicar:
+    needs: empaquetar
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - id: pages
+        uses: actions/deploy-pages@v4
