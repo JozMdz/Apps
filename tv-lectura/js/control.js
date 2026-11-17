@@ -1,5 +1,7 @@
-/* Control desde el celular: muestra los botones de la pantalla de la TV y manda
- * a la TV el que se toca. Ver js/conexion.js (lado de la TV). */
+/* El celular como control remoto de la TV (ver js/conexion.js, lado de la TV).
+ * Dos modos:
+ *  - Flechas: cruceta y OK, igual que el control de la tele (se puede dejar presionado).
+ *  - Puntero: se desliza el dedo y una flecha se mueve en la TV; un toque elige. */
 (function () {
   'use strict';
 
@@ -10,12 +12,24 @@
   var sala = param('sala');
   var senal = param('senal');
   var $ = function (id) { return document.getElementById(id); };
-  var botones = $('botones');
   var conexion = null;
   var peer = null;
 
   function estado(t) { $('estado').textContent = t; }
   function aviso(t) { $('aviso').textContent = t || ''; }
+
+  /* ---------- Modo (se recuerda en este celular) ---------- */
+  function modo(m) {
+    document.body.className = m === 'puntero' ? 'puntero' : '';
+    $('modo-flechas').className = m === 'puntero' ? '' : 'activo';
+    $('modo-puntero').className = m === 'puntero' ? 'activo' : '';
+    try { localStorage.setItem('leoyjuego-modo', m); } catch (e) { /* nada */ }
+  }
+  var guardado = 'flechas';
+  try { guardado = localStorage.getItem('leoyjuego-modo') || 'flechas'; } catch (e) { /* nada */ }
+  modo(guardado);
+  $('modo-flechas').onclick = function () { modo('flechas'); };
+  $('modo-puntero').onclick = function () { modo('puntero'); };
 
   if (!sala) {
     estado('Falta el código');
@@ -28,24 +42,127 @@
     return;
   }
 
+  function mandar(m, vibrar) {
+    if (conexion && conexion.open) conexion.send(JSON.stringify(m));
+    if (vibrar !== false && navigator.vibrate) navigator.vibrate(20);
+  }
+
+  /* Toque inmediato (sin esperar al «click»). f se llama al tocar; suelta al levantar el dedo. */
+  function alTocar(b, f, suelta) {
+    var tocado = 0;
+    b.addEventListener('touchstart', function (ev) {
+      ev.preventDefault();
+      tocado = Date.now();
+      b.classList.add('presionado');
+      f();
+    }, { passive: false });
+    function fin() { b.classList.remove('presionado'); if (suelta) suelta(); }
+    b.addEventListener('touchend', fin);
+    b.addEventListener('touchcancel', fin);
+    b.addEventListener('mousedown', function () { if (Date.now() - tocado > 600) { f(); } });
+    b.addEventListener('mouseup', function () { if (Date.now() - tocado > 600) fin(); });
+    b.addEventListener('mouseleave', function () { if (Date.now() - tocado > 600) fin(); });
+  }
+
+  /* ---------- Botones de arriba ---------- */
+  alTocar($('atras'), function () { mandar({ t: 'atras' }); });
+  alTocar($('repetir'), function () { mandar({ t: 'repetir' }); });
+
+  /* ---------- Cruceta: dejar presionada una flecha la repite ---------- */
+  [].forEach.call(document.querySelectorAll('#cruceta button'), function (b) {
+    var k = +b.getAttribute('data-k');
+    var espera = null, repite = null;
+    function parar() { clearTimeout(espera); clearInterval(repite); }
+    alTocar(b, function () {
+      parar();
+      mandar({ t: 'tecla', k: k });
+      if (k === 13) return;
+      espera = setTimeout(function () {
+        repite = setInterval(function () { mandar({ t: 'tecla', k: k }, false); }, 160);
+      }, 420);
+    }, parar);
+  });
+
+  /* ---------- Puntero ---------- */
+  var tactil = $('tactil'), dedo = $('dedo');
+  var SENSIBILIDAD = 3.2;
+  var inicio = null, ultimo = null, recorrido = 0, pendX = 0, pendY = 0, programado = false;
+
+  function enviarMovimiento() {
+    programado = false;
+    if (!pendX && !pendY) return;
+    mandar({ t: 'puntero', dx: Math.round(pendX), dy: Math.round(pendY) }, false);
+    pendX = 0; pendY = 0;
+  }
+  function punto(ev) {
+    var t = ev.touches ? ev.touches[0] : ev;
+    return { x: t.clientX, y: t.clientY };
+  }
+  function mostrarDedo(p) {
+    var r = tactil.getBoundingClientRect();
+    dedo.style.display = 'block';
+    dedo.style.left = (p.x - r.left) + 'px';
+    dedo.style.top = (p.y - r.top) + 'px';
+  }
+  function empieza(ev) {
+    ev.preventDefault();
+    inicio = { p: punto(ev), t: Date.now() };
+    ultimo = inicio.p;
+    recorrido = 0;
+    tactil.classList.add('tocando');
+    mostrarDedo(ultimo);
+  }
+  function mueve(ev) {
+    if (!inicio) return;
+    ev.preventDefault();
+    var p = punto(ev);
+    var dx = p.x - ultimo.x, dy = p.y - ultimo.y;
+    ultimo = p;
+    recorrido += Math.abs(dx) + Math.abs(dy);
+    // Un poco de aceleración: movimientos rápidos llegan más lejos.
+    var vel = Math.min(2.2, 1 + (Math.abs(dx) + Math.abs(dy)) / 30);
+    pendX += dx * SENSIBILIDAD * vel;
+    pendY += dy * SENSIBILIDAD * vel;
+    mostrarDedo(p);
+    if (!programado) { programado = true; requestAnimationFrame(enviarMovimiento); }
+  }
+  function termina() {
+    if (!inicio) return;
+    var toque = recorrido < 12 && Date.now() - inicio.t < 350;
+    inicio = null;
+    tactil.classList.remove('tocando');
+    dedo.style.display = 'none';
+    enviarMovimiento();
+    if (toque) mandar({ t: 'clic' });
+  }
+  tactil.addEventListener('touchstart', empieza, { passive: false });
+  tactil.addEventListener('touchmove', mueve, { passive: false });
+  tactil.addEventListener('touchend', termina);
+  tactil.addEventListener('touchcancel', termina);
+  tactil.addEventListener('mousedown', empieza);
+  tactil.addEventListener('mousemove', mueve);
+  tactil.addEventListener('mouseup', termina);
+  alTocar($('ok-puntero'), function () { mandar({ t: 'clic' }); });
+
+  /* ---------- Lo que manda la TV: en qué pantalla está ---------- */
+  function pintar(datos) {
+    if (!datos || datos.t !== 'pantalla') return;
+    $('titulo').textContent = datos.titulo || '';
+    $('repetir').className = 'redondo' + (datos.repetir ? '' : ' apagado');
+  }
+
+  /* ---------- Conexión con la TV ---------- */
   function opcionesPeer() {
     if (!senal) return { debug: 0 };
     var hp = senal.split(':');
     return { host: hp[0], port: +hp[1] || 9000, path: '/', secure: location.protocol === 'https:', debug: 0 };
   }
-
-  function mandar(m) {
-    if (conexion && conexion.open) conexion.send(JSON.stringify(m));
-    if (navigator.vibrate) navigator.vibrate(25);
-  }
-
   var reintento = null;
   function reintentar() {
     if (reintento) return;
     estado('Buscando la TV…');
     reintento = setTimeout(function () { reintento = null; conectar(); }, 3000);
   }
-
   function conectar() {
     if (!peer || peer.destroyed) {
       peer = new Peer(opcionesPeer());
@@ -63,7 +180,7 @@
     var c = peer.connect('leoyjuego-' + sala, { reliable: true });
     c.on('open', function () {
       conexion = c;
-      estado('¡Conectado a la TV!');
+      estado('Conectado a la TV');
       aviso('');
     });
     c.on('data', function (d) {
@@ -71,101 +188,10 @@
     });
     c.on('close', function () {
       if (conexion === c) conexion = null;
-      botones.innerHTML = '';
-      ultimaFirma = '';
+      $('titulo').textContent = '';
       reintentar();
     });
     c.on('error', reintentar);
-  }
-
-  $('atras').onclick = function () { mandar({ t: 'atras' }); };
-  $('repetir').onclick = function () { mandar({ t: 'repetir' }); };
-
-  var ultimaPantalla = '';
-  var ultimaFirma = '';
-  var ESTADOS = ['foco', 'bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista'];
-
-  function imagen(src, clase) {
-    var i = document.createElement('img');
-    i.src = src;
-    if (clase) i.className = clase;
-    return i;
-  }
-  // Toque inmediato (para la batería y los minijuegos) sin esperar al «click».
-  function alTocar(b, f) {
-    var tocado = 0;
-    b.addEventListener('touchstart', function (ev) { ev.preventDefault(); tocado = Date.now(); f(); }, { passive: false });
-    b.addEventListener('click', function () { if (Date.now() - tocado > 600) f(); });
-  }
-
-  function crearBoton(it) {
-    var b = document.createElement('button');
-    var clases = [];
-    if (it.tarjeta) {
-      clases.push('tarjeta');
-      if (it.img) b.appendChild(imagen(it.img));
-      else { var abc = document.createElement('span'); abc.className = 'abc'; abc.textContent = it.abc; b.appendChild(abc); }
-      b.appendChild(document.createTextNode(it.texto));
-    } else if (it.nav === 'escuchar') {
-      clases.push('escuchar');
-      b.appendChild(imagen('img/_altavoz.svg'));
-      b.appendChild(document.createTextNode('Escuchar'));
-    } else if (it.grande) {
-      clases.push('grande');
-      if (it.circulo) {
-        var c = document.createElement('span'); c.className = 'circulo'; c.style.background = it.color; b.appendChild(c);
-      } else if (it.veces) {
-        clases.push('varios');
-        for (var k = 0; k < it.veces; k++) b.appendChild(imagen(it.img));
-      } else if (it.img) b.appendChild(imagen(it.img));
-      else { b.textContent = it.texto; if (it.pad) clases.push('pad'); else if (it.texto.length > 3) clases.push('largo'); }
-    } else {
-      if (it.texto && it.texto.length > 2) clases.push('ancho');
-      if (it.icono) b.appendChild(imagen(it.icono, 'icono'));
-      b.appendChild(document.createTextNode(it.texto || ''));
-    }
-    if (it.color && !it.circulo) b.style.background = it.color;
-    b.setAttribute('data-base', clases.join(' '));
-    alTocar(b, function () { mandar({ t: 'elegir', n: it.n }); });
-    return b;
-  }
-  function estados(b, it) {
-    var clases = [b.getAttribute('data-base')];
-    ESTADOS.forEach(function (c) { if (it[c]) clases.push(c); });
-    b.className = clases.join(' ');
-  }
-
-  function pintar(datos) {
-    if (!datos || datos.t !== 'pantalla') return;
-    var hayAtras = false, hayRepetir = false;
-    var lista = datos.items.filter(function (it) {
-      if (it.nav === 'atras') { hayAtras = true; return false; }
-      if (it.nav === 'repetir') { hayRepetir = true; return false; }
-      return true;
-    });
-    $('atras').className = hayAtras || datos.id === 'fin' || datos.id === 'minifin' ? '' : 'invisible';
-    $('repetir').className = hayRepetir ? '' : 'invisible';
-    $('titulo').textContent = datos.titulo || '';
-    botones.className = datos.diseno || 'c2';
-
-    // Si solo cambió el estado (foco, bien, mal), se actualizan las clases sin
-    // rehacer los botones, para no perder un toque que esté en curso.
-    var firma = datos.id + '|' + lista.map(function (it) {
-      return it.n + (it.texto || '') + (it.img || '') + (it.nav || '') + (it.veces || '') + (it.color || '');
-    }).join('|');
-    if (firma === ultimaFirma && botones.children.length === lista.length) {
-      lista.forEach(function (it, k) { estados(botones.children[k], it); });
-      return;
-    }
-    ultimaFirma = firma;
-    botones.innerHTML = '';
-    lista.forEach(function (it) {
-      var b = crearBoton(it);
-      estados(b, it);
-      botones.appendChild(b);
-    });
-    if (datos.id !== ultimaPantalla) document.querySelector('main').scrollTop = 0;
-    ultimaPantalla = datos.id;
   }
 
   // Mantener la pantalla del celular encendida mientras juega (si el navegador lo permite).

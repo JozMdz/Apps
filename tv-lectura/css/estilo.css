@@ -295,3 +295,7 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 .opcion.carta.bien { background: #c8e6c9; }
 #minifin { justify-content: center; }
 #minifin h2 { font-size: 150px; color: #fff; margin: 0 0 80px; text-shadow: 0 8px 0 #0277bd; }
+
+/* Puntero manejado desde el celular */
+#puntero { position: absolute; z-index: 20; pointer-events: none; display: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,.4)); }
+#puntero.visible { display: block; }
