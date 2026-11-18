@@ -296,6 +296,38 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 #minifin { justify-content: center; }
 #minifin h2 { font-size: 150px; color: #fff; margin: 0 0 80px; text-shadow: 0 8px 0 #0277bd; }
 
-/* Puntero manejado desde el celular */
-#puntero { position: absolute; z-index: 20; pointer-events: none; display: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,.4)); }
-#puntero.visible { display: block; }
+/* «Ya leo»: Frases */
+.palabra-grande.frase { font-size: 120px; letter-spacing: 0; padding: 24px 60px; }
+.palabra-grande.frase.larga { font-size: 92px; }
+.opcion.escena-opcion { width: 500px; height: 300px; padding: 16px; }
+.escena { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.escena-fila { display: flex; justify-content: center; }
+.escena-fila img { width: 96px; height: 96px; margin: 6px; }
+.escena.una .escena-fila img { width: 140px; height: 140px; margin: 8px; }
+
+/* «Ya leo»: Escribe */
+.escribe { display: flex; align-items: center; }
+.escribe > * + * { margin-left: 50px; }
+.escribe .dibujo-grande { width: 240px; height: 240px; padding: 24px; }
+
+/* «Ya leo»: Cuentos */
+.cuento-numero { width: 140px; font-size: 48px; font-weight: 700; color: #fff; text-align: right; text-shadow: 0 4px 0 #0277bd; }
+.cuento-dibujos {
+  display: flex; align-items: center; justify-content: center; min-height: 300px; margin-top: 6px;
+  background: #fff; border-radius: 50px; padding: 20px 50px; box-shadow: 0 14px 0 rgba(0,0,0,.15);
+}
+.cuento-dibujos img { width: 260px; height: 260px; margin: 0 20px; }
+.cuento-texto { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1720px; margin-top: 36px; }
+.palabra-cuento {
+  font-size: 96px; font-weight: 700; line-height: 1.15; margin: 10px; padding: 4px 22px;
+  background: rgba(255,255,255,.92); border-radius: 28px; box-shadow: 0 8px 0 rgba(0,0,0,.12);
+}
+.palabra-cuento.leyendo { background: #fff176; }
+.cuento-nav { display: flex; margin-top: 40px; }
+.cuento-nav > * + * { margin-left: 40px; }
+.cuento-nav .ico { width: 60px; height: 60px; vertical-align: -12px; }
+.cuento-opciones { display: none; margin-top: 60px; }
+.cuento-opciones > * + * { margin-left: 50px; }
+#cuento.pregunta .cuento-opciones { display: flex; }
+#cuento.pregunta .cuento-dibujos { display: none; }
+#cuento.pregunta .cuento-texto { margin-top: 80px; }

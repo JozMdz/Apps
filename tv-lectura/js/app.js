@@ -36,7 +36,7 @@
 
   /* ---------- Estado guardado ---------- */
   var EST = (function () {
-    var base = { niveles: {}, estampas: [], mayus: false, voz: true };
+    var base = { niveles: {}, estampas: [], mayus: false, voz: true, musica: true };
     try {
       var g = JSON.parse(localStorage.getItem('leoyjuego') || 'null');
       if (g) for (var k in g) base[k] = g[k];
@@ -61,22 +61,20 @@
   }
   window.addEventListener('resize', ajustar);
 
-  /* ---------- Voz ---------- */
+  /* ---------- Voz ----------
+   * Los audios suenan por Web Audio (js/sonido.js): en la TV, un <audio> que cambia de archivo
+   * para cada sílaba se comía el principio de cada clip. Si no hay Web Audio (o aún no se
+   * puede), se usa un <audio> como antes. */
   var HAY_AUDIO = {};
   D.audios.forEach(function (a) { HAY_AUDIO[a] = true; });
   var reproductor = new Audio();
   var turnoVoz = 0;
-  var cache = {};
+  var SON = window.SON;
 
+  function ruta(k) { return 'audio/' + k + '.mp3'; }
   function precargar(claves) {
-    claves.forEach(function (k) {
-      if (HAY_AUDIO[k] && !cache[k]) {
-        var a = new Audio();
-        a.preload = 'auto';
-        a.src = 'audio/' + k + '.mp3';
-        cache[k] = a;
-      }
-    });
+    if (!SON) return;
+    claves.forEach(function (k) { if (HAY_AUDIO[k]) SON.cargar(ruta(k)); });
   }
 
   /* Reproduce una lista de audios uno tras otro. Llama a alTerminar al final
@@ -85,36 +83,55 @@
     var turno = ++turnoVoz;
     var lista = (claves || []).filter(function (k) { return HAY_AUDIO[k]; });
     var terminado = false;
+    var vigia = null;
     function fin() {
+      clearTimeout(vigia);
       if (terminado || turno !== turnoVoz) return;
       terminado = true;
       if (alTerminar) alTerminar();
     }
-    try { reproductor.pause(); } catch (e) { /* nada */ }
+    callarAudios();
     if (!EST.voz || !lista.length) { setTimeout(fin, 700); return; }
     var i = 0;
-    // Por si el audio no avisa que terminó.
-    var limite = setTimeout(fin, 2500 * lista.length + 1500);
+    // Por si un audio nunca avisa que terminó.
+    function vigilar(ms) { clearTimeout(vigia); vigia = setTimeout(siguiente, ms); }
     function siguiente() {
-      if (turno !== turnoVoz) { clearTimeout(limite); return; }
-      if (i >= lista.length) { clearTimeout(limite); fin(); return; }
+      clearTimeout(vigia);
+      if (turno !== turnoVoz) return;
+      if (i >= lista.length) { fin(); return; }
+      var url = ruta(lista[i++]);
+      if (SON && SON.corriendo()) {
+        vigilar(6000);
+        SON.cargar(url, function (buf) {
+          if (turno !== turnoVoz) return;
+          clearTimeout(vigia);
+          if (buf) SON.decir(buf, siguiente); else conAudio(url);
+        });
+      } else conAudio(url);
+    }
+    function conAudio(url) {
+      vigilar(7000);
       reproductor.onended = siguiente;
       reproductor.onerror = siguiente;
-      reproductor.src = 'audio/' + lista[i++] + '.mp3';
+      reproductor.src = url;
       var p = reproductor.play();
       if (p && p.catch) p.catch(function (err) {
         // El navegador no deja sonar hasta que alguien pulse algo en la TV.
         if (err && err.name === 'NotAllowedError') avisoSonido(true);
-        setTimeout(siguiente, 300);
+        if (turno === turnoVoz) vigilar(300);
       });
     }
     siguiente();
+  }
+  function callarAudios() {
+    try { reproductor.pause(); } catch (e) { /* nada */ }
+    if (SON) SON.callarVoz();
   }
   function avisoSonido(ver) {
     var a = $('aviso-sonido');
     if (a) a.className = ver ? 'visible' : '';
   }
-  function callar() { turnoVoz++; try { reproductor.pause(); } catch (e) { /* nada */ } }
+  function callar() { turnoVoz++; callarAudios(); }
   function felicitar() { return 'f_bien' + (1 + Math.floor(Math.random() * 5)); }
   function animar() { return 'f_mal' + (1 + Math.floor(Math.random() * 2)); }
 
@@ -128,16 +145,22 @@
       return e.offsetParent !== null && !e.disabled && !e.classList.contains('usada');
     });
   }
+  var esperaVoz = null;
   function enfocar(e, sinVoz) {
     if (enfocado === e) return;
     if (enfocado) enfocado.classList.remove('enfocado');
     enfocado = e;
+    clearTimeout(esperaVoz);
     if (!e) return;
     e.classList.add('enfocado');
     if (e.scrollIntoView && e.parentNode && e.parentNode.id === 'album-rejilla') {
       e.scrollIntoView({ block: 'nearest' });
     }
-    if (e.alEnfocar && !sinVoz) e.alEnfocar();
+    if (sinVoz) return;
+    if (SON) SON.efecto.mover();
+    // Dice el botón solo si el foco se queda en él un momento: al pasar rápido por varios
+    // botones se oían pedacitos de cada uno.
+    if (e.alEnfocar) esperaVoz = setTimeout(function () { if (enfocado === e) e.alEnfocar(); }, 280);
   }
   function centro(e) {
     var r = e.getBoundingClientRect();
@@ -163,9 +186,14 @@
   }
 
   var bloqueado = false;
+  // Los botones de respuesta y los de los instrumentos ya tienen su propio sonido.
+  function sonidoElegir(e) {
+    if (!SON || e.classList.contains('opcion') || e.classList.contains('pad') || e.sinSonido) return;
+    SON.efecto.elegir();
+  }
   function activar(e) {
     if (!e || bloqueado) return;
-    if (e.alElegir) e.alElegir(); else e.click();
+    if (e.alElegir) { sonidoElegir(e); e.alElegir(); } else e.click();
   }
 
   var TECLAS = {};   // teclas propias de una pantalla: TECLAS[id](codigo) devuelve true si la usó
@@ -192,6 +220,7 @@
     return manejada;
   }
   document.addEventListener('keydown', function (ev) {
+    if (SON) SON.activar();   // una tecla del control permite que suene la TV
     if (tecla(ev.keyCode)) ev.preventDefault();
   });
 
@@ -202,14 +231,17 @@
     e.addEventListener('click', function (ev) {
       ev.preventDefault();
       enfocar(e, true);
-      if (!bloqueado && e.alElegir) e.alElegir();
+      if (!bloqueado && e.alElegir) { sonidoElegir(e); e.alElegir(); }
     });
     e.addEventListener('mouseover', function () { enfocar(e); });
     return e;
   }
 
+  // Música de fondo de cada pantalla (las que no están aquí llevan la alegre; null = sin música).
+  var MUSICA = { juego: 'tranquila' };
   function mostrar(id, foco) {
     callar();
+    if (SON) SON.musica(MUSICA.hasOwnProperty(id) ? MUSICA[id] : 'alegre');
     bloqueado = false;
     var nueva = $(id);
     if (pantalla) pantalla.classList.remove('activa');
@@ -229,6 +261,8 @@
       ronda = null;
       if (catActual) { abrirMenu(catActual); return; }
     }
+    // Un menú dentro de otro (Cuentos está dentro de «Ya leo») regresa al de afuera.
+    if (id === 'menu' && catActual && CATS[catActual].padre) { abrirMenu(CATS[catActual].padre); return; }
     irInicio();
   }
   function salir() {
@@ -328,6 +362,7 @@
   // Marca la respuesta de la pregunta actual y pasa a la siguiente.
   function preguntaLista(voz) {
     bloqueado = true;
+    if (SON) SON.efecto.bien();
     ronda.marcas[ronda.n] = ronda.fallo ? 'medio' : 'ok';
     if (!ronda.fallo) ronda.aciertos++;
     ronda.n++;
@@ -337,6 +372,7 @@
   }
   function equivocado(boton, voz, temporal) {
     ronda.fallo = true;
+    if (SON) SON.efecto.mal();
     boton.classList.remove('mal');
     void boton.offsetWidth;  // reinicia la animación
     boton.classList.add('mal');
@@ -739,6 +775,7 @@
   function etiquetasPapas() {
     $('aj-letra').textContent = 'Letra: ' + (EST.mayus ? 'MAYÚSCULAS' : 'minúsculas');
     $('aj-voz').textContent = 'Voz: ' + (EST.voz ? 'encendida' : 'apagada');
+    $('aj-musica').textContent = 'Música de fondo: ' + (EST.musica ? 'encendida' : 'apagada');
     var n = JUEGOS.map(nivelDe);
     var iguales = n.every(function (x) { return x === n[0]; });
     $('aj-nivel').textContent = 'Nivel de los juegos: ' + (iguales ? n[0] : 'cada uno el suyo') + ' (OK: todos al siguiente)';
@@ -747,6 +784,12 @@
   }
   prepararFoco($('aj-letra'), function () { EST.mayus = !EST.mayus; guardar(); etiquetasPapas(); });
   prepararFoco($('aj-voz'), function () { EST.voz = !EST.voz; guardar(); etiquetasPapas(); });
+  prepararFoco($('aj-musica'), function () {
+    EST.musica = !EST.musica;
+    guardar();
+    if (SON) SON.prenderMusica(EST.musica);
+    etiquetasPapas();
+  });
   prepararFoco($('aj-nivel'), function () {
     // Pone todos los juegos en el mismo nivel: 1 → 2 → 3 → 1
     var n = nivelDe('letras') % NIVEL_MAX + 1;
@@ -776,12 +819,14 @@
     prepararFoco: prepararFoco, enfocar: enfocar, mostrar: mostrar, lluvia: lluvia,
     PREGUNTAS: PREGUNTAS, preguntaLista: preguntaLista, equivocado: equivocado, empezar: empezar,
     categoria: categoria, agregarJuego: agregarJuego, abrirMenu: abrirMenu, irInicio: irInicio,
-    pantallaNueva: pantallaNueva, TECLAS: TECLAS, ATRAS: ATRAS, abrirPapas: abrirPapas,
+    pantallaNueva: pantallaNueva, TECLAS: TECLAS, ATRAS: ATRAS, abrirPapas: abrirPapas, MUSICA: MUSICA,
+    precargar: precargar,
     ronda: function () { return ronda; }
   };
 
   /* ---------- Arranque ---------- */
-  document.addEventListener('click', function () { avisoSonido(false); }, true);
+  document.addEventListener('click', function () { avisoSonido(false); if (SON) SON.activar(); }, true);
+  if (SON) SON.prenderMusica(EST.musica);
   ajustar();
   precargar(['f_hola', 'f_bien1', 'f_bien2', 'f_bien3', 'f_bien4', 'f_bien5', 'f_mal1', 'f_mal2']);
   irInicio();

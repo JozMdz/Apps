@@ -100,73 +100,81 @@
   }
 
   /* ---------- Lo que se manda al celular ---------- */
-  /* ---------- Lo que se manda al celular: solo en qué pantalla está ---------- */
+  var ESTADOS = ['bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista'];
+
+  function describir(e, i) {
+    var d = { n: i };
+    var cl = e.classList;
+    var imgs = e.querySelectorAll('img');
+    var color = e.getAttribute('data-color');
+    if (color) d.color = color;
+    if (cl.contains('nav-atras')) d.nav = 'atras';
+    else if (e.id === 'repetir') d.nav = 'repetir';
+    else if (cl.contains('altavoz-grande')) d.nav = 'escuchar';
+    else if (cl.contains('tarjeta')) {
+      d.tarjeta = true;
+      d.texto = e.querySelector('.t-nombre').textContent;
+      var ti = e.querySelector('.t-img');
+      if (ti) d.img = ti.getAttribute('src'); else d.abc = e.querySelector('.t-icono').textContent;
+    } else if (cl.contains('pad')) {
+      d.grande = true;
+      d.pad = true;
+      d.texto = e.querySelector('.pad-nombre').textContent;
+    } else if (cl.contains('opcion') || cl.contains('estampa')) {
+      d.grande = true;
+      var esc = e.querySelector('.escena');
+      if (esc) {   // «Frases»: renglones de dibujos (cuántos y cuál)
+        d.escena = [].map.call(esc.children, function (f) {
+          return [f.children.length, f.firstChild ? f.firstChild.getAttribute('src') : ''];
+        });
+      } else if (cl.contains('color')) d.circulo = true;
+      else if (imgs.length > 1) { d.img = imgs[0].getAttribute('src'); d.veces = imgs.length; }
+      else if (imgs.length) d.img = imgs[0].getAttribute('src');
+      else d.texto = e.textContent;
+    } else {
+      d.texto = e.textContent.replace(/\s+/g, ' ').trim();
+      if (imgs.length) d.icono = imgs[0].getAttribute('src');
+    }
+    ESTADOS.forEach(function (c) { if (cl.contains(c)) d[c] = true; });
+    if (e === window.LEO.enfocado()) d.foco = true;
+    return d;
+  }
+
+  // Cómo se acomodan los botones en el celular: lista, álbum o rejilla de N columnas.
+  var DISENO = { inicio: 'lista', menu: 'lista', papas: 'lista', fin: 'lista', minifin: 'lista', tiempo: 'lista',
+    album: 'album', pin: 'c3', escribir: 'c6', bateria: 'c2', teclado: 'c2', guitarra: 'c2' };
+
+  var focosActuales = [];
   var ultimo = '';
   function enviar(forzar) {
     if (!conexiones.length) return;
     var p = window.LEO.pantalla();
-    var datos = { t: 'pantalla', id: p ? p.id : '', titulo: '' };
+    focosActuales = window.LEO.focos();
+    var datos = { t: 'pantalla', id: p ? p.id : '', items: focosActuales.map(describir) };
     if (p) {
       var tit = p.querySelector('[data-cel-titulo]') || p.querySelector('.barra h2');
-      datos.titulo = p.id === 'inicio' ? 'Inicio' : p.id === 'juego' ? '¡Mira la tele!'
-        : p.id === 'fin' ? '¡Terminaste!' : tit ? tit.textContent : '';
-      datos.repetir = p.id === 'juego';
+      datos.titulo = p.id === 'fin' ? (document.getElementById('fin-mensaje').textContent || '¡Terminaste!')
+        : p.id === 'juego' ? '¡Mira la tele!' : p.id === 'inicio' ? 'Elige' : tit ? tit.textContent : '';
+      datos.diseno = p.getAttribute('data-cel') || DISENO[p.id] ||
+        (document.querySelectorAll('#opciones .foco').length > 6 ? 'c4' : 'c2');
     }
     var json = JSON.stringify(datos);
     if (json === ultimo && !forzar) return;
     ultimo = json;
     conexiones.forEach(function (c) { try { c.send(json); } catch (e) { /* nada */ } });
   }
-  setInterval(enviar, 300);
-
-  /* ---------- Puntero (flecha en la TV que se mueve con el dedo) ---------- */
-  var esc = document.getElementById('escenario');
-  var flecha = document.createElement('div');
-  flecha.id = 'puntero';
-  flecha.innerHTML = '<svg viewBox="0 0 32 32" width="72" height="72"><path d="M5 3 L5 26 L11 20 L15 29 L19 27 L15 18 L24 18 Z" fill="#fff" stroke="#263238" stroke-width="2.2" stroke-linejoin="round"/></svg>';
-  esc.appendChild(flecha);
-  var px = 960, py = 540, ocultar = null;
-
-  function mostrarFlecha() {
-    flecha.className = 'visible';
-    flecha.style.left = px + 'px';
-    flecha.style.top = py + 'px';
-    clearTimeout(ocultar);
-    ocultar = setTimeout(function () { flecha.className = ''; }, 6000);
-  }
-  // Botón que está debajo de la punta de la flecha.
-  function bajoFlecha() {
-    var r = esc.getBoundingClientRect();
-    var s = r.width / 1920;
-    var e = document.elementFromPoint(r.left + px * s, r.top + py * s);
-    while (e && e !== esc && !(e.classList && e.classList.contains('foco'))) e = e.parentNode;
-    if (!e || e === esc) return null;
-    var p = window.LEO.pantalla();
-    return p && p.contains(e) && !e.classList.contains('usada') ? e : null;
-  }
-  function moverFlecha(dx, dy) {
-    px = Math.max(0, Math.min(1910, px + dx));
-    py = Math.max(0, Math.min(1070, py + dy));
-    mostrarFlecha();
-    var e = bajoFlecha();
-    if (e && e !== window.LEO.enfocado()) window.LEO.enfocar(e);
-  }
-  function clic() {
-    mostrarFlecha();
-    var e = bajoFlecha();
-    if (e) window.LEO.elegir(e);
-    else window.LEO.tecla(13);   // fuera de un botón: como OK (sirve para saltar)
-  }
+  setInterval(enviar, 250);
 
   function recibir(msg) {
     var m;
     try { m = typeof msg === 'string' ? JSON.parse(msg) : msg; } catch (e) { return; }
     if (!m) return;
-    if (m.t === 'tecla') window.LEO.tecla(m.k);
-    else if (m.t === 'puntero') moverFlecha(m.dx || 0, m.dy || 0);
-    else if (m.t === 'clic') clic();
-    else if (m.t === 'atras') window.LEO.atras();
+    if (m.t === 'elegir') {
+      var e = focosActuales[m.n];
+      if (e && e.offsetParent !== null) window.LEO.elegir(e);
+    } else if (m.t === 'atras') window.LEO.atras();
     else if (m.t === 'repetir') window.LEO.repetir();
+    else if (m.t === 'mover') window.LEO.mover(m.dx || 0, m.dy || 0);
     setTimeout(function () { enviar(); }, 60);
   }
 
