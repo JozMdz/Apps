@@ -331,3 +331,21 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 #cuento.pregunta .cuento-opciones { display: flex; }
 #cuento.pregunta .cuento-dibujos { display: none; }
 #cuento.pregunta .cuento-texto { margin-top: 80px; }
+
+/* Repaso de inglés */
+.opcion.texto { font-size: 80px; padding: 20px 50px; color: #1565c0; }
+.opcion.heshe { min-width: 380px; font-size: 140px; }
+.opcion.there { font-size: 90px; min-width: 520px; }
+.opcion.lugar { font-size: 72px; height: 200px; text-transform: capitalize; }
+.opcion.letras, .opcion.escrita { min-width: 320px; font-size: 130px; letter-spacing: 4px; }
+#opciones.columna { flex-direction: column; align-items: center; margin-top: 24px; }
+#opciones.columna > * + * { margin-left: 0; margin-top: 24px; }
+#opciones.columna .opcion { height: 130px; min-width: 1000px; font-size: 70px; }
+.palabra-grande.frase-en { font-size: 84px; letter-spacing: 0; padding: 26px 50px; }
+.pregunta-ingles { display: flex; flex-direction: column; align-items: flex-start; }
+.pregunta-ingles > div:first-child { font-size: 60px; color: #78909c; }
+.muestra-color { width: 100%; height: 100%; border-radius: 50%; }
+.grupo.panel.pocos img { width: 180px; height: 180px; margin: 12px; }
+.opcion.bote { width: 360px; height: 300px; flex-direction: column; border-radius: 30px 30px 70px 70px; color: #263238; }
+.bote-icono { width: 130px; height: 130px; background: url(../img/i_recycle.svg) center / contain no-repeat; }
+.bote-nombre { font-size: 58px; letter-spacing: 3px; margin-top: 10px; }

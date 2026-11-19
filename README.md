@@ -5,7 +5,7 @@ Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV L
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
-| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.3.0_all.ipk` |
+| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.4.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -166,6 +166,7 @@ Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben
 | **Leer** | **Letras** (ve la letra y busca el dibujo que empieza con ella) · **Escucha** (oye una sílaba y la busca) · **Sílabas** (completa la palabra) · **Palabras** (lee y busca el dibujo, sin ayuda de voz) · **Arma** (forma la palabra con sílabas) · **Mi nombre** (arma su nombre letra por letra; papá o mamá lo escriben la primera vez) |
 | **Ya leo** 🦉 | Para cuando ya empieza a leer. **Frases** (lee «dos peras y un sapo» o «El oso come cuatro fresas.» y busca el dibujo; los dibujos equivocados cambian solo el número o una cosa, así que hay que leer toda la frase) · **Escribe** (ve el dibujo, oye la palabra y la escribe letra por letra) · **Cuentos** (6 cuentos cortos para leer solo: tocar una palabra la dice, *Escuchar* lee la página resaltando cada palabra, y al final hay una pregunta) |
 | **Inglés** | **Words** (oye la palabra en inglés y busca el dibujo: animales, comida, cosas) · **Colors** · **Numbers** (1 al 10). Al acertar oye la palabra en inglés y en español. |
+| **Inglés → Repaso** | Lo que ven en la escuela (kínder 3): **My words** (hospital, firefighter, teacher, fireworks, candles, lanterns…) · **He / She** (niño u hombre = *He*, niña o mujer = *She*; luego «___ is a doctor.») · **Places** (*Where are you? We're at the library / playground / beach…*) · **There's a** (*There's a candle* / *There are three lanterns*) · **ow ea ee** (completar c-**ow**, l-**ea**-f, s-**ee**-d y elegir la bien escrita: *leaf* o *leef*) · **Recycle** (¿*plastic*, *glass* o *metal*?). Si se equivoca en He/She o There's a, la voz le vuelve a explicar la regla en español. |
 | **Números** | **Cuenta** (¿cuántos hay?) · **Números** (oye el número y lo busca, hasta 20) · **Sumas** (con dibujos y luego solo números) · **Más o menos** |
 | **Música** | **Batería** (6 tambores) · **Teclado** (do-re-mi, con la canción *Estrellita* guiada) · **Guitarra** (6 acordes). Se toca con OK, con los números 1-8 del control o desde el celular. |
 | **Juegos** 🔒 | **Salta** (el caballito brinca nopales y piedras, estilo circo) · **Atrapa** (la canasta atrapa fruta) · **Memoria** (parejas). Piden el **PIN** y cuánto tiempo (5, 10, 15 o 30 min); al acabarse el tiempo regresan solos al inicio. |
@@ -222,7 +223,7 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
    la app Developer Mode.
 5. Descarga el instalador: en GitHub → **Actions** → la última ejecución verde de
    **App para TV LG** → abajo, en **Artifacts**, **leo-y-juego-ipk** (llega en un .zip; descomprímelo).
-6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.3.0_all.ipk`.
+6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.4.0_all.ipk`.
    Aparece **Leo y Juego** en la barra de apps de la TV.
 7. El modo desarrollador dura **50 horas**: abre la app *Developer Mode* de vez en cuando y pulsa
    **Extend** (si caduca, la app se borra y hay que repetir el paso 6).
@@ -236,7 +237,8 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
 ## Agregar palabras, cuentos o cambiar las voces
 
 Las palabras están en `tv-lectura/herramientas/palabras.txt` (`palabra | sí-la-bas | emoji | inglés | grupo`)
-y los cuentos en `tv-lectura/herramientas/cuentos.txt` (título, una frase por página con sus dibujos y
+los cuentos en `tv-lectura/herramientas/cuentos.txt` y el repaso de inglés en las listas `PERSONAS`,
+`LUGARES`, `COSAS_INGLES`, `SONIDOS`, `RECICLA` y `VOCAB` de `generar.py` (título, una frase por página con sus dibujos y
 la pregunta del final; las instrucciones están al principio del archivo). Las frases del juego
 *Frases* salen de la lista `NOMBRES_FRASES` de `generar.py`. Después de editar hay que volver a
 generar dibujos y voces (solo se crean las voces que faltan):
