@@ -254,7 +254,8 @@
             EST.leidos[C.k] = true;
             L.guardar();
             var c = C;
-            L.hablar([L.felicitar(), 'f_leido'], function () {
+            if (L.darBloques) L.darBloques(3, 3);   // premio para «Mi mundo»
+            L.hablar([L.felicitar(), 'f_leido', 'f_bloques'], function () {
               if (C === c && L.pantalla().id === 'cuento') abrirLista();
             });
             if (nuevo) marcarLeidos();

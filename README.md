@@ -5,7 +5,7 @@ Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV L
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
-| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.4.0_all.ipk` |
+| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.5.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -171,10 +171,17 @@ Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben
 | **Música** | **Batería** (6 tambores) · **Teclado** (do-re-mi, con la canción *Estrellita* guiada) · **Guitarra** (6 acordes). Se toca con OK, con los números 1-8 del control o desde el celular. |
 | **Juegos** 🔒 | **Salta** (el caballito brinca nopales y piedras, estilo circo) · **Atrapa** (la canasta atrapa fruta) · **Memoria** (parejas). Piden el **PIN** y cuánto tiempo (5, 10, 15 o 30 min); al acabarse el tiempo regresan solos al inicio. |
 
+- **Tema de bloques** (mundo de pixeles: cielo en franjas, nubes cuadradas, suelo de pasto y tierra,
+  botones con forma de bloque y música de videojuego). Los bloques son dibujos propios
+  (`herramientas/bloques.py`). En *Papás → Tema* se puede volver al tema clásico.
+- **Mi mundo**: al terminar cada ronda gana un bloque por estrella (oro y gema solo con 5 estrellas)
+  y 3 por cada cuento leído. En *Mi mundo* (botón con el pico, en el inicio) elige un bloque de abajo y
+  con OK lo pone en un mundo de 10 × 6; si ya hay uno, lo quita y regresa a su inventario. Desde el
+  celular se toca el cuadro directamente. Todo queda guardado en la TV.
 - **Música de fondo** suave (alegre en los menús, tranquila mientras juega a leer) que baja sola
   cuando habla la voz, y sonidos al moverse, elegir, acertar y fallar. Se apaga en *Papás*.
-- **Para papás** (también con PIN): minúsculas o MAYÚSCULAS, voz, música de fondo, nivel, nombre del
-  niño, cambiar el PIN y borrar el progreso. Si se olvida el PIN: pulsar seguidos los botones **rojo, verde,
+- **Para papás** (también con PIN): minúsculas o MAYÚSCULAS, voz, música de fondo, tema, nivel,
+  nombre del niño, cambiar el PIN y borrar el progreso. Si se olvida el PIN: pulsar seguidos los botones **rojo, verde,
   amarillo y azul** del control.
 - **Jugar con el celular** (como los juegos de Netflix): en el inicio aparece un QR; al escanearlo,
   el celular muestra **los mismos botones que la pantalla de la TV** (dibujos, sílabas, menús,
@@ -223,7 +230,7 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
    la app Developer Mode.
 5. Descarga el instalador: en GitHub → **Actions** → la última ejecución verde de
    **App para TV LG** → abajo, en **Artifacts**, **leo-y-juego-ipk** (llega en un .zip; descomprímelo).
-6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.4.0_all.ipk`.
+6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.5.0_all.ipk`.
    Aparece **Leo y Juego** en la barra de apps de la TV.
 7. El modo desarrollador dura **50 horas**: abre la app *Developer Mode* de vez en cuando y pulsa
    **Extend** (si caduca, la app se borra y hay que repetir el paso 6).
@@ -254,8 +261,8 @@ python3 tv-lectura/herramientas/generar.py --twemoji package --voz es_MX-claude-
 Para probarla en la computadora: `cd tv-lectura && python3 -m http.server` y abrir
 `http://localhost:8000` (las flechas, Enter y Esc hacen de control remoto).
 
-Créditos: conexión con [PeerJS](https://peerjs.com/) (MIT), QR con [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letra
-[Andika](https://software.sil.org/andika/) (SIL OFL), voces [Piper](https://github.com/rhasspy/piper) es_MX "claude" y en_US "amy". Los sonidos de los instrumentos, los efectos y la música de fondo se generan en la TV (Web Audio).
+Créditos: conexión con [PeerJS](https://peerjs.com/) (MIT), QR con [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letras
+[Andika](https://software.sil.org/andika/) y [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL OFL; la de pixeles solo en títulos), voces [Piper](https://github.com/rhasspy/piper) es_MX "claude" y en_US "amy". Los sonidos de los instrumentos, los efectos y la música de fondo se generan en la TV (Web Audio).
 
 **Sobre el sonido en la TV**: las voces se reproducen con Web Audio (`js/sonido.js`), no cambiando el
 archivo de un `<audio>`, porque en la TV eso se comía el principio de cada clip y solo se oían

@@ -100,7 +100,7 @@
   }
 
   /* ---------- Lo que se manda al celular ---------- */
-  var ESTADOS = ['bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista'];
+  var ESTADOS = ['bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista', 'elegida', 'vacia'];
 
   function describir(e, i) {
     var d = { n: i };
@@ -111,6 +111,14 @@
     if (cl.contains('nav-atras')) d.nav = 'atras';
     else if (e.id === 'repetir') d.nav = 'repetir';
     else if (cl.contains('altavoz-grande')) d.nav = 'escuchar';
+    else if (cl.contains('celda')) {          // «Mi mundo»: cuadro del mundo (con su bloque o vacío)
+      d.celda = true;
+      d.img = e.getAttribute('data-bloque') || '';
+    } else if (cl.contains('ranura')) {       // «Mi mundo»: bloque del inventario y cuántos quedan
+      d.ranura = true;
+      d.img = imgs[0].getAttribute('src');
+      d.texto = e.textContent;
+    }
     else if (cl.contains('tarjeta')) {
       d.tarjeta = true;
       d.texto = e.querySelector('.t-nombre').textContent;
@@ -142,7 +150,7 @@
 
   // Cómo se acomodan los botones en el celular: lista, álbum o rejilla de N columnas.
   var DISENO = { inicio: 'lista', menu: 'lista', papas: 'lista', fin: 'lista', minifin: 'lista', tiempo: 'lista',
-    album: 'album', pin: 'c3', escribir: 'c6', bateria: 'c2', teclado: 'c2', guitarra: 'c2' };
+    album: 'album', pin: 'c3', escribir: 'c6', bateria: 'c2', teclado: 'c2', guitarra: 'c2', mundo: 'mundo' };
 
   var focosActuales = [];
   var ultimo = '';

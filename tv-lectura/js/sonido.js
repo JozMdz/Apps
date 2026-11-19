@@ -265,6 +265,12 @@ var SON = (function () {
     punto: function () { tono('sine', 880, 880, 0.3, 0.1); tono('sine', 1320, 1320, 0.3, 0.14, 0.09); },
     golpe: function () { tono('sawtooth', 200, 60, 0.4, 0.3); soplo('lowpass', 800, 0.4, 0.2); },
     voltear: function () { tono('sine', 520, 620, 0.2, 0.08); },
+    // «Mi mundo»: poner un bloque (golpe sordo) y quitarlo (crujido)
+    poner: function () { soplo('lowpass', 600, 0.6, 0.09); tono('sine', 170, 90, 0.4, 0.1); },
+    romper: function () {
+      for (var i = 0; i < 3; i++) soplo('bandpass', 1600 + i * 500, 0.45, 0.05, i * 0.045, null, 1.5);
+      tono('square', 240, 120, 0.06, 0.12);
+    },
     ganar: function () {
       [523, 659, 784, 1047].forEach(function (f, i) { tono('triangle', f, f, 0.35, 0.3, i * 0.13); });
     },
@@ -307,6 +313,7 @@ var SON = (function () {
   TEMAS.tranquila.melodia = TEMAS.tranquila.acordes.map(arpegio);
 
   var musicaPrendida = true;
+  var estilo = 'suave';   // 'suave' (campanitas) o '8bit' (tema de bloques)
   var tema = null, nombreTema = null, paso = 0, siguienteT = 0, reloj = null;
   var hablando = false, soltar = null;
 
@@ -338,7 +345,10 @@ var SON = (function () {
     var compas = Math.floor(n / 8) % T.acordes.length, i = n % 8;
     var a = T.acordes[compas];
     var m = T.melodia[compas][i];
-    if (m) {                                           // melodía: campanita
+    if (m && estilo === '8bit') {                      // melodía de videojuego (onda cuadrada)
+      nota('square', hz(m), 0.07, corchea * 1.6, t);
+      nota('triangle', hz(m), 0.18, corchea * 1.6, t);
+    } else if (m) {                                    // melodía: campanita
       nota('sine', hz(m), 0.32, 0.55, t);
       nota('sine', hz(m) * 2, 0.07, 0.25, t);
     }
@@ -404,6 +414,7 @@ var SON = (function () {
     corriendo: corriendo,
     cargar: cargar, decir: decir, callarVoz: callarVoz,
     musica: musica, prenderMusica: prenderMusica,
+    estilo: function (e) { estilo = e; },
     tema: function () { return nombreTema; },
     bateria: bateria, piano: piano, acorde: acorde, pulsar: pulsar, efecto: efecto,
     // Solo para pruebas: usar otro contexto (p. ej. OfflineAudioContext) para medir sonidos.

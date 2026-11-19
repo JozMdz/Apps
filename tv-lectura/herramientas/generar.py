@@ -90,6 +90,9 @@ FRASES = {
     "escribe": "Escribe la palabra.",
     "cuentos": "Lee el cuento. Si no sabes una palabra, tócala y la escuchas.",
     "leido": "¡Leíste todo el cuento!",
+    "bloques": "¡Ganaste bloques para tu mundo!",
+    "mundo": "Este es tu mundo. Elige un bloque de abajo y ponlo donde quieras. Si tocas uno que ya está, lo quitas.",
+    "sinbloques": "Ya no tienes de esos bloques. Elige otro, o juega para ganar más.",
 }
 
 # Palabras para el juego «Frases»: palabra -> (género, plural, tipo)
