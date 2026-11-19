@@ -83,7 +83,7 @@
 
   var ultimaPantalla = '';
   var ultimaFirma = '';
-  var ESTADOS = ['foco', 'bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista'];
+  var ESTADOS = ['foco', 'bien', 'mal', 'usada', 'bloqueada', 'guia', 'vista', 'elegida', 'vacia'];
 
   function imagen(src, clase) {
     var i = document.createElement('img');
@@ -110,6 +110,15 @@
       clases.push('escuchar');
       b.appendChild(imagen('img/_altavoz.svg'));
       b.appendChild(document.createTextNode('Escuchar'));
+    } else if (it.celda) {                   // «Mi mundo»: un cuadro del mundo
+      clases.push('celda');
+      if (it.img) b.style.backgroundImage = 'url(' + it.img + ')';
+    } else if (it.ranura) {                  // «Mi mundo»: bloque para elegir, con cuántos quedan
+      clases.push('ranura');
+      b.appendChild(imagen(it.img));
+      var n = document.createElement('b');
+      n.textContent = it.texto;
+      b.appendChild(n);
     } else if (it.grande) {
       clases.push('grande');
       if (it.escena) {

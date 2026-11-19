@@ -1,0 +1,104 @@
+/* Tema «bloques»: mundo de pixeles con cielo en franjas, nubes cuadradas, suelo de pasto y tierra,
+ * y botones con forma de bloque (bisel claro arriba, oscuro abajo y contorno negro).
+ * Se activa con <html class="tema-bloques"> (Papás → Tema). Los dibujos de los bloques son propios
+ * (herramientas/bloques.py). La letra de pixeles solo va en los títulos: lo que el niño lee sigue en
+ * Andika, que tiene las formas de letra para aprender a leer. */
+@font-face { font-family: "Pixelify Sans"; font-weight: 700; src: url("../fuentes/pixelify-sans-latin-700-normal.woff2") format("woff2"); }
+
+.tema-bloques {
+  --foco: #fff;
+  --bisel: inset -8px -8px 0 rgba(0,0,0,.22), inset 8px 8px 0 rgba(255,255,255,.55);
+  --contorno: 0 0 0 5px #1e1e1e;
+  --sombra: 10px 12px 0 rgba(0,0,0,.28);
+}
+.tema-bloques body { background: #6db5f7; }
+
+/* Cielo en franjas y suelo de bloques */
+.tema-bloques #escenario {
+  background: linear-gradient(180deg,
+    #4f9ff0 0, #4f9ff0 17%, #63acf3 17%, #63acf3 34%, #79baf6 34%, #79baf6 50%,
+    #92c8f8 50%, #92c8f8 62%, #aad6fa 62%, #aad6fa 70%, #aad6fa 100%);
+}
+.tema-bloques #escenario::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 756px; bottom: 0;
+  background: url(../img/b_pasto.svg) 0 0 / 108px 108px repeat-x, url(../img/b_tierra.svg) 0 0 / 108px 108px repeat;
+}
+.tema-bloques #nubes span { border-radius: 0; height: 60px; width: 260px; opacity: .92; }
+.tema-bloques #nubes span::before { border-radius: 0; width: 130px; height: 50px; left: 60px; top: -50px; }
+
+/* Títulos con letra de pixeles y sombra dura */
+.tema-bloques .titulo, .tema-bloques .barra h2, .tema-bloques #fin h2, .tema-bloques #minifin h2,
+.tema-bloques .pin-mensaje, .tema-bloques .puntos, .tema-bloques .cuento-numero {
+  font-family: "Pixelify Sans", "Andika", sans-serif; text-shadow: 6px 6px 0 #1e1e1e; letter-spacing: 2px;
+}
+.tema-bloques .titulo { text-shadow: 10px 10px 0 #1e1e1e; font-size: 140px; }
+.tema-bloques #fin-mensaje, .tema-bloques #album-palabra, .tema-bloques .nota { text-shadow: 4px 4px 0 #1e1e1e; }
+
+/* Todo lo que es botón o caja se vuelve bloque */
+.tema-bloques .tarjeta, .tema-bloques .boton-chico, .tema-bloques .boton-redondo, .tema-bloques .boton-grande,
+.tema-bloques .opcion, .tema-bloques .letra-grande, .tema-bloques .dibujo-grande, .tema-bloques .palabra-grande,
+.tema-bloques .hueco, .tema-bloques .altavoz-grande, .tema-bloques .estampa, .tema-bloques .ajuste,
+.tema-bloques .pin-tecla, .tema-bloques .letra-tecla, .tema-bloques .boton-tiempo, .tema-bloques .campo-nombre,
+.tema-bloques .palabra-cuento, .tema-bloques .cuento-dibujos, .tema-bloques .grupo.panel, .tema-bloques .pista,
+.tema-bloques #aviso-sonido, .tema-bloques #celular {
+  border-radius: 4px;
+  box-shadow: var(--bisel), var(--contorno), var(--sombra);
+}
+.tema-bloques .hueco.vacio { box-shadow: none; border-radius: 4px; border-style: dashed; }
+.tema-bloques .altavoz-grande { animation: none; }
+.tema-bloques .opcion.bote { border-radius: 4px; }
+.tema-bloques .pad { box-shadow: var(--contorno), var(--sombra); }
+.tema-bloques .teclas .pad { border-radius: 4px; }
+.tema-bloques .acordes .pad { border-radius: 4px; }
+
+/* Foco: marco blanco de pixeles con contorno negro */
+.tema-bloques .foco.enfocado {
+  transform: scale(1.06);
+  box-shadow: var(--bisel), 0 0 0 5px #1e1e1e, 0 0 0 15px #fff, 0 0 0 20px #1e1e1e, var(--sombra);
+}
+.tema-bloques .opcion.bien { box-shadow: var(--bisel), 0 0 0 5px #1e1e1e, 0 0 0 16px #43a047, 0 0 0 21px #1e1e1e; }
+.tema-bloques .palabra-cuento.leyendo { background: #fff176; }
+
+/* Progreso: cuadritos */
+.tema-bloques #progreso i { border-radius: 0; box-shadow: 0 0 0 4px #1e1e1e; }
+.tema-bloques #progreso i.ok { background: #43a047; box-shadow: inset -6px -6px 0 rgba(0,0,0,.25), 0 0 0 4px #1e1e1e; }
+.tema-bloques #progreso i.medio { background: #fdd835; }
+.tema-bloques #progreso i.actual { background: #fff; box-shadow: 0 0 0 4px #1e1e1e, 0 0 0 10px #fff; }
+
+/* Confeti: cuadritos que caen sin girar */
+.tema-bloques #confeti i { width: 30px; height: 30px; border-radius: 0; animation-name: caeBloque; animation-timing-function: steps(20, end); }
+@keyframes caeBloque { to { transform: translateY(1200px); } }
+
+/* Premio de bloques en la pantalla final */
+.premio-bloques { display: flex; align-items: center; margin-left: 50px; }
+.premio-bloques img { width: 150px; height: 150px; box-shadow: 0 0 0 6px #1e1e1e, 10px 12px 0 rgba(0,0,0,.28); animation: gira 1s ease-out; }
+.premio-bloques b { font-size: 90px; color: #fff; margin-left: 24px; text-shadow: 5px 5px 0 #1e1e1e; font-family: "Pixelify Sans", "Andika", sans-serif; }
+
+/* ---------- Mi mundo ---------- */
+.mundo-rejilla {
+  display: grid; grid-template-columns: repeat(10, 124px); grid-template-rows: repeat(6, 124px);
+  background: linear-gradient(180deg, #63acf3, #aad6fa); margin-top: 4px;
+  box-shadow: 0 0 0 8px #1e1e1e, 12px 14px 0 rgba(0,0,0,.3);
+}
+.celda { position: relative; padding: 0; background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+.celda.llena { background-size: 100% 100%; box-shadow: none; }
+.celda.foco.enfocado { transform: none; z-index: 3; box-shadow: 0 0 0 6px #fff, 0 0 0 11px #1e1e1e; }
+.celda.enfocado:not(.llena)::after {
+  content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  background: var(--fantasma) center / 100% 100%; opacity: .45;
+}
+.mundo-rejilla.agotado .celda::after { display: none; }
+.celda.golpe { animation: tiembla .3s; }
+.mundo-inventario { display: flex; margin-top: 34px; padding: 12px; background: rgba(30,30,30,.55); box-shadow: 0 0 0 5px #1e1e1e; }
+.mundo-inventario > * + * { margin-left: 10px; }
+.ranura {
+  position: relative; width: 104px; height: 104px; padding: 10px; background: #8b8b8b;
+  box-shadow: inset -6px -6px 0 rgba(0,0,0,.3), inset 6px 6px 0 rgba(255,255,255,.35);
+}
+.ranura img { width: 100%; height: 100%; display: block; }
+.ranura b { position: absolute; right: 6px; bottom: 2px; font-size: 34px; color: #fff; text-shadow: 3px 3px 0 #1e1e1e; font-family: "Pixelify Sans", "Andika", sans-serif; }
+.ranura.vacia img { opacity: .3; }
+.ranura.elegida { background: #f5f5f5; box-shadow: inset -6px -6px 0 rgba(0,0,0,.2), 0 0 0 6px #ffd600; }
+.ranura.foco.enfocado { transform: scale(1.12); box-shadow: 0 0 0 6px #fff, 0 0 0 11px #1e1e1e; }
+.migas { position: absolute; width: 124px; height: 124px; pointer-events: none; z-index: 4; }
+.migas i { position: absolute; left: 47px; top: 47px; width: 30px; height: 30px; background-size: 400% 400%; transition: transform .45s ease-out, opacity .45s; }

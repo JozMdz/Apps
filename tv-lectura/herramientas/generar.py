@@ -90,6 +90,9 @@ FRASES = {
     "escribe": "Escribe la palabra.",
     "cuentos": "Lee el cuento. Si no sabes una palabra, tócala y la escuchas.",
     "leido": "¡Leíste todo el cuento!",
+    "bloques": "¡Ganaste bloques para tu mundo!",
+    "mundo": "Este es tu mundo. Elige un bloque de abajo y ponlo donde quieras. Si tocas uno que ya está, lo quitas.",
+    "sinbloques": "Ya no tienes de esos bloques. Elige otro, o juega para ganar más.",
 }
 
 # Palabras para el juego «Frases»: palabra -> (género, plural, tipo)
@@ -108,6 +111,110 @@ NOMBRES_FRASES = {
     "vela": ("f", "velas", "o"), "llave": ("f", "llaves", "o"), "bota": ("f", "botas", "o"),
 }
 NUMEROS_FRASE = {2: "dos", 3: "tres", 4: "cuatro"}
+
+# ---------- Repaso de inglés: lo que ven en la escuela (kínder 3) ----------
+# Dibujos nuevos para el repaso: se guardan como img/i_<clave>.svg
+DIBUJOS_INGLES = {
+    "boy": "👦", "girl": "👧", "man": "👨", "woman": "👩", "grandpa": "👴", "grandma": "👵",
+    "teacher_m": "👨‍🏫", "teacher_f": "👩‍🏫", "firefighter_m": "👨‍🚒", "firefighter_f": "👩‍🚒",
+    "doctor_m": "👨‍⚕️", "doctor_f": "👩‍⚕️", "cook_m": "👨‍🍳", "cook_f": "👩‍🍳",
+    "farmer_m": "👨‍🌾", "farmer_f": "👩‍🌾", "police_m": "👮‍♂️", "police_f": "👮‍♀️",
+    "prince": "🤴", "princess": "👸",
+    "library": "📚", "playground": "🛝", "beach": "🏖️", "garden": "🌻", "sport": "🏟️",
+    "hospital": "🏥", "school": "🏫", "park": "🏞️", "supermarket": "🛒",
+    "candle": "🕯️", "lantern": "🏮", "fireworks": "🎆", "costume": "🦸",
+    "cow": "🐄", "clown": "🤡", "snow": "❄️", "bowl": "🥣", "leaf": "🍃", "peach": "🍑", "tea": "🍵",
+    "meat": "🍖", "bean": "🫘", "ear": "👂", "seed": "🌱", "feet": "🦶", "three": "3️⃣", "jeep": "🚙",
+    "lotion": "🧴", "cup": "🥤", "babybottle": "🍼", "toothbrush": "🪥", "bucket": "🪣",
+    "jar": "🫙", "milkglass": "🥛", "mirror": "🪞", "window": "🪟",
+    "can": "🥫", "spoon": "🥄", "coin": "🪙", "paperclip": "📎", "bolt": "🔩", "recycle": "♻️",
+}
+# He / She: [dibujo, he o she, palabra, nivel]
+PERSONAS = [
+    ["i_boy", "he", "boy", 1], ["i_girl", "she", "girl", 1], ["i_man", "he", "man", 1],
+    ["i_woman", "she", "woman", 1], ["i_grandpa", "he", "grandpa", 1], ["i_grandma", "she", "grandma", 1],
+    ["i_prince", "he", "prince", 1], ["i_princess", "she", "princess", 1],
+    ["i_teacher_m", "he", "teacher", 2], ["i_teacher_f", "she", "teacher", 2],
+    ["i_firefighter_m", "he", "firefighter", 2], ["i_firefighter_f", "she", "firefighter", 2],
+    ["i_doctor_m", "he", "doctor", 2], ["i_doctor_f", "she", "doctor", 2],
+    ["i_cook_m", "he", "cook", 2], ["i_cook_f", "she", "cook", 2],
+    ["i_farmer_m", "he", "farmer", 2], ["i_farmer_f", "she", "farmer", 2],
+    ["i_police_m", "he", "police officer", 2], ["i_police_f", "she", "police officer", 2],
+]
+# Where are you? We're at the…: [lugar, dibujo]
+LUGARES = [["library", "i_library"], ["playground", "i_playground"], ["beach", "i_beach"],
+           ["community garden", "i_garden"], ["sport center", "i_sport"], ["hospital", "i_hospital"],
+           ["school", "i_school"], ["park", "i_park"], ["supermarket", "i_supermarket"]]
+# There's a / There are: [singular, plural, dibujo]
+COSAS_INGLES = [["candle", "candles", "i_candle"], ["present", "presents", "regalo"],
+                ["balloon", "balloons", "globo"], ["lantern", "lanterns", "i_lantern"],
+                ["cake", "cakes", "pastel"], ["star", "stars", "estrella"],
+                ["apple", "apples", "manzana"], ["ball", "balls", "pelota"]]
+NUMBERS_EN = ["zero", "one", "two", "three", "four", "five"]
+# OW, EA, EE: [palabra, letras, dibujo (o color #rrggbb)]
+SONIDOS = [["cow", "ow", "i_cow"], ["owl", "ow", "_buho"], ["crown", "ow", "corona"],
+           ["clown", "ow", "i_clown"], ["snow", "ow", "i_snow"], ["bowl", "ow", "i_bowl"],
+           ["brown", "ow", "#795548"], ["flower", "ow", "flor"],
+           ["leaf", "ea", "i_leaf"], ["peach", "ea", "i_peach"], ["tea", "ea", "i_tea"],
+           ["sea", "ea", "mar"], ["seal", "ea", "foca"], ["meat", "ea", "i_meat"],
+           ["bean", "ea", "i_bean"], ["ear", "ea", "i_ear"], ["beach", "ea", "i_beach"],
+           ["bee", "ee", "abeja"], ["seed", "ee", "i_seed"], ["tree", "ee", "arbol"],
+           ["sheep", "ee", "oveja"], ["cheese", "ee", "queso"], ["three", "ee", "i_three"],
+           ["green", "ee", "#43a047"], ["queen", "ee", "i_princess"], ["feet", "ee", "i_feet"],
+           ["jeep", "ee", "i_jeep"]]
+# Recycle: [cosa, bote, dibujo]
+RECICLA = [["bottle", "plastic", "i_lotion"], ["cup", "plastic", "i_cup"],
+           ["baby bottle", "plastic", "i_babybottle"], ["toothbrush", "plastic", "i_toothbrush"],
+           ["bucket", "plastic", "i_bucket"],
+           ["jar", "glass", "i_jar"], ["glass of milk", "glass", "i_milkglass"], ["mirror", "glass", "i_mirror"],
+           ["light bulb", "glass", "foco"], ["window", "glass", "i_window"],
+           ["can", "metal", "i_can"], ["spoon", "metal", "i_spoon"], ["key", "metal", "llave"],
+           ["coin", "metal", "i_coin"], ["paperclip", "metal", "i_paperclip"], ["bolt", "metal", "i_bolt"]]
+# My words: vocabulario de la unidad: [palabra, dibujo]
+VOCAB = [["hospital", "i_hospital"], ["firefighter", "i_firefighter_m"], ["teacher", "i_teacher_f"],
+         ["beach", "i_beach"], ["cake", "pastel"], ["fireworks", "i_fireworks"], ["candles", "i_candle"],
+         ["present", "regalo"], ["lanterns", "i_lantern"], ["costume", "i_costume"],
+         ["library", "i_library"], ["playground", "i_playground"], ["garden", "i_garden"],
+         ["doctor", "i_doctor_f"], ["school", "i_school"], ["balloon", "globo"]]
+# Instrucciones en español (con la voz en español); las palabras en inglés van aparte.
+FRASES_REPASO = {
+    "heshe1": "Para un niño o un señor, decimos",
+    "heshe2": "Y para una niña o una señora, decimos",
+    "there1": "Si hay uno, decimos",
+    "there2": "Si hay muchos, decimos",
+    "lugares": "¿Dónde están? Busca el lugar.",
+    "sonidos": "Escucha la palabra y elige las letras que faltan.",
+    "sonidos3": "¿Cuál está bien escrita?",
+    "recicla": "¿En qué bote de reciclaje va?",
+}
+
+
+def textos_repaso():
+    """Voces en inglés del repaso. Todas las palabras sueltas usan la clave i_w_<palabra>."""
+    t = {"i_w_he": "He.", "i_w_she": "She.", "i_where": "Where are you?",
+         "i_theres_a": "There's a.", "i_there_are": "There are."}
+    def palabra(w):
+        t["i_w_" + clave(w)] = w[0].upper() + w[1:] + "."
+    for _, g, w, _ in PERSONAS:
+        palabra(w)
+        art = "an" if w[0] in "aeiou" else "a"
+        t["i_%s_%s" % (g, clave(w))] = "%s is %s %s." % (g.capitalize(), art, w)
+    for w, _ in LUGARES:
+        palabra(w)
+        t["i_at_" + clave(w)] = "We're at the %s." % w
+    for uno, varios, _ in COSAS_INGLES:
+        t["i_there_1_" + clave(uno)] = "There's a %s." % uno
+        for n in range(2, 6):
+            t["i_there_%d_%s" % (n, clave(uno))] = "There are %s %s." % (NUMBERS_EN[n], varios)
+    for w, _, _ in SONIDOS:
+        palabra(w)
+    for w, bote, _ in RECICLA:
+        palabra(w)
+        palabra(bote)
+        t["i_es_" + bote] = "It's %s!" % bote
+    for w, _ in VOCAB:
+        palabra(w)
+    return t
 
 ESCUCHA_SILABAS = ["ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu",
                    "sa", "se", "si", "so", "su", "la", "le", "li", "lo", "lu",
@@ -287,6 +394,8 @@ def main():
         shutil.copyfile(ruta, os.path.join(img, w["k"] + ".svg"))
     for k, emoji in DIBUJOS_EXTRA.items():
         shutil.copyfile(svg_de_emoji(emoji, a.twemoji), os.path.join(img, k + ".svg"))
+    for k, emoji in DIBUJOS_INGLES.items():
+        shutil.copyfile(svg_de_emoji(emoji, a.twemoji), os.path.join(img, "i_" + k + ".svg"))
     # Íconos de los botones (como imagen: algunas TVs no tienen fuente de emojis)
     for nombre, emoji in ICONOS.items():
         shutil.copyfile(svg_de_emoji(emoji, a.twemoji), os.path.join(img, "_" + nombre + ".svg"))
@@ -320,6 +429,9 @@ def main():
         ingles["ec_" + k] = k + "."
     for k, t in FRASES_EN.items():
         ingles["ef_" + k] = t
+    ingles.update(textos_repaso())
+    for k, t in FRASES_REPASO.items():
+        textos["f_" + k] = t
     for k, t in FRASES.items():
         textos["f_" + k] = t
     for fr in frases:
@@ -352,6 +464,8 @@ def main():
         "frases": frases,
         "tipos": {p: t[2] for p, t in sorted(NOMBRES_FRASES.items())},
         "cuentos": cuentos,
+        "repaso": {"personas": PERSONAS, "lugares": LUGARES, "cosas": COSAS_INGLES, "sonidos": SONIDOS,
+                   "recicla": RECICLA, "vocab": VOCAB, "numeros": NUMBERS_EN},
     }
     with open(os.path.join(RAIZ, "js", "datos.js"), "w", encoding="utf-8") as f:
         f.write("// Generado por herramientas/generar.py; no editar a mano.\n")

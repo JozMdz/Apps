@@ -33,6 +33,15 @@
   #botones.c6 { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-gap: 6px; }
   #botones.c6 button { min-width: 0; }
   #botones.c6 button.ancho { grid-column: span 3; aspect-ratio: auto; min-height: 52px; }
+  /* «Mi mundo»: el mundo de 10 x 6 y abajo los bloques para elegir */
+  #botones.mundo { grid-template-columns: repeat(10, 1fr); grid-gap: 0; background: linear-gradient(#63acf3, #aad6fa); box-shadow: 0 0 0 4px #1e1e1e; }
+  #botones.mundo button.celda { aspect-ratio: 1 / 1; min-height: 0; padding: 0; border-radius: 0; background: transparent center / 100% 100%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  #botones.mundo button.celda.foco { box-shadow: inset 0 0 0 3px #fff; }
+  #botones.mundo button.ranura { grid-column: span 2; aspect-ratio: 1 / 1; min-height: 0; margin: 6px 4px 0; padding: 6px; border-radius: 4px; background: #8b8b8b; position: relative; }
+  #botones.mundo button.ranura img { width: 80%; height: 80%; }
+  #botones.mundo button.ranura b { position: absolute; right: 4px; bottom: 0; font-size: 18px; color: #fff; text-shadow: 2px 2px 0 #1e1e1e; }
+  #botones.mundo button.ranura.elegida { background: #fff; box-shadow: 0 0 0 4px #ffd600; }
+  #botones.mundo button.ranura.vacia img { opacity: .3; }
   #botones.c2g button { min-height: 38vh; font-size: 64px; background: #ffd600; }
   #botones button {
     border: 0; border-radius: 26px; background: #fff; font-family: inherit; font-weight: 700; color: var(--tinta);

@@ -47,6 +47,8 @@
     try { localStorage.setItem('leoyjuego', JSON.stringify(EST)); } catch (e) { /* nada */ }
   }
   function txt(t) { return EST.mayus ? t.toUpperCase() : t; }
+  // Tema de bloques desde el principio (para que no se vea un momento el clásico). Ver js/mundo.js.
+  document.documentElement.className = EST.tema === 'clasico' ? '' : 'tema-bloques';
   function nivelDe(j) { return EST.niveles[j] || 1; }
 
   /* ---------- Escalar el escenario de 1920x1080 a la pantalla ---------- */
@@ -626,6 +628,8 @@
       mensaje = '¡Sigue practicando!';
       voz.push('f_otra');
     }
+    // Bloques para «Mi mundo»: uno por estrella (js/mundo.js).
+    if (window.LEO.premio) window.LEO.premio(r.aciertos, premio, voz);
     guardar();
     $('fin-mensaje').textContent = mensaje;
     $('otra-vez').alElegir = function () { empezar(r.juego); };
