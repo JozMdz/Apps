@@ -36,6 +36,7 @@
       return true;
     };
     L.ATRAS[id] = function () { L.abrirMenu('musica'); };
+    L.MUSICA[id] = null;   // sin música de fondo mientras toca
     p.botones = lista;
     p.caja = caja;
     p.abrir = function () { SON.activar(); L.mostrar(id, lista[0]); };

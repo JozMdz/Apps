@@ -9,12 +9,15 @@ Uso:
   se da otra en inglés (en_US-amy-medium.onnx) para el módulo de inglés,
   con su .onnx.json al lado. Requiere `pip install piper-tts` y ffmpeg.
 
-Lee herramientas/palabras.txt y escribe js/datos.js, img/*.svg y audio/*.mp3.
+Lee herramientas/palabras.txt y herramientas/cuentos.txt, y escribe js/datos.js, img/*.svg
+y audio/*.mp3.
 Los audios que ya existen no se vuelven a generar (salvo con --rehacer).
 """
 import argparse
 import json
 import os
+import random
+import re
 import shutil
 import subprocess
 import sys
@@ -46,7 +49,10 @@ ICONOS = {"musica": "🎵", "bateria": "🥁", "teclado": "🎹", "guitarra": "�
           "candado": "🔒", "corre": "🐎", "canasta": "🧺", "corazon": "❤️", "roca": "🪨",
           "paleta_colores": "🎨", "carta": "❓", "reloj_arena": "⏳",
           "estrella": "⭐", "altavoz": "🔊", "libro": "📖", "rompecabezas": "🧩",
-          "engrane": "⚙️", "casa": "🏠"}
+          "engrane": "⚙️", "casa": "🏠", "buho": "🦉", "libros": "📚"}
+
+# Dibujos que no son palabras del juego (personajes y cosas de los cuentos).
+DIBUJOS_EXTRA = {"nino": "👦", "mama": "👩", "mar": "🌊"}
 
 FRASES = {
     "hola": "¡Hola! Vamos a jugar a leer. Elige un juego.",
@@ -80,7 +86,28 @@ FRASES = {
     "ganaste": "¡Ganaste!",
     "otravez": "¡Casi! Vamos otra vez.",
     "tocar": "¡A tocar!",
+    "frases": "Lee la frase. ¿Cuál es el dibujo?",
+    "escribe": "Escribe la palabra.",
+    "cuentos": "Lee el cuento. Si no sabes una palabra, tócala y la escuchas.",
+    "leido": "¡Leíste todo el cuento!",
 }
+
+# Palabras para el juego «Frases»: palabra -> (género, plural, tipo)
+# tipo: a = animal, c = comida, o = objeto. Deben estar en palabras.txt (por el dibujo).
+NOMBRES_FRASES = {
+    "gato": ("m", "gatos", "a"), "pato": ("m", "patos", "a"), "sapo": ("m", "sapos", "a"),
+    "mono": ("m", "monos", "a"), "oso": ("m", "osos", "a"), "perro": ("m", "perros", "a"),
+    "loro": ("m", "loros", "a"), "conejo": ("m", "conejos", "a"), "pez": ("m", "peces", "a"),
+    "vaca": ("f", "vacas", "a"), "foca": ("f", "focas", "a"), "abeja": ("f", "abejas", "a"),
+    "pera": ("f", "peras", "c"), "uva": ("f", "uvas", "c"), "fresa": ("f", "fresas", "c"),
+    "dona": ("f", "donas", "c"), "manzana": ("f", "manzanas", "c"), "paleta": ("f", "paletas", "c"),
+    "taco": ("m", "tacos", "c"), "pan": ("m", "panes", "c"), "coco": ("m", "cocos", "c"),
+    "helado": ("m", "helados", "c"), "elote": ("m", "elotes", "c"), "tomate": ("m", "tomates", "c"),
+    "globo": ("m", "globos", "o"), "dado": ("m", "dados", "o"), "regalo": ("m", "regalos", "o"),
+    "pelota": ("f", "pelotas", "o"), "flor": ("f", "flores", "o"), "estrella": ("f", "estrellas", "o"),
+    "vela": ("f", "velas", "o"), "llave": ("f", "llaves", "o"), "bota": ("f", "botas", "o"),
+}
+NUMEROS_FRASE = {2: "dos", 3: "tres", 4: "cuatro"}
 
 ESCUCHA_SILABAS = ["ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu",
                    "sa", "se", "si", "so", "su", "la", "le", "li", "lo", "lu",
@@ -145,6 +172,96 @@ def decir(texto, destino, voz, rehacer):
                         "-ac", "1", "-ar", "22050", "-b:a", "48k", destino], check=True)
 
 
+def cantidad(n, palabra):
+    """«un gato», «una pera», «dos gatos»…"""
+    genero, plural, _ = NOMBRES_FRASES[palabra]
+    if n == 1:
+        return ("un " if genero == "m" else "una ") + palabra
+    return NUMEROS_FRASE[n] + " " + plural
+
+
+def clave_frase(texto):
+    return "fr_" + clave(texto).strip("_")
+
+
+def hacer_frases():
+    """Frases para leer en tres niveles. g = lo que muestra el dibujo: [[cantidad, palabra], …]."""
+    azar = random.Random(2026)
+    nombres = sorted(NOMBRES_FRASES)
+    por_tipo = {t: [p for p in nombres if NOMBRES_FRASES[p][2] == t] for t in "aco"}
+    lista = []
+
+    def agregar(nivel, texto, grupos):
+        if all(f["t"] != texto for f in lista):
+            lista.append({"t": texto, "k": clave_frase(texto), "n": nivel, "g": grupos})
+
+    # Nivel 1: «dos gatos», «una pera»
+    for p in nombres:
+        for n in (1, 2, 3):
+            agregar(1, cantidad(n, p), [[n, p]])
+    # Nivel 2: «dos peras y un sapo»
+    while sum(f["n"] == 2 for f in lista) < 50:
+        a, b = azar.sample(nombres, 2)
+        na, nb = azar.randint(1, 3), azar.randint(1, 3)
+        agregar(2, cantidad(na, a) + " y " + cantidad(nb, b), [[na, a], [nb, b]])
+    # Nivel 3: «El gato tiene tres globos.», «La vaca come dos peras.»
+    while sum(f["n"] == 3 for f in lista) < 50:
+        animal = azar.choice(por_tipo["a"])
+        come = azar.random() < 0.5
+        cosa = azar.choice(por_tipo["c"] if come else por_tipo["c"] + por_tipo["o"])
+        n = azar.randint(1, 4)
+        art = "El " if NOMBRES_FRASES[animal][0] == "m" else "La "
+        texto = art + animal + (" come " if come else " tiene ") + cantidad(n, cosa) + "."
+        agregar(3, texto, [[1, animal], [n, cosa]])
+    return lista
+
+
+SIGNOS = "¡!¿?.,;:—\"'«»"
+
+
+def palabras_de(texto, diccionario):
+    """Parte una frase en palabras para tocarlas: [[como se ve, audio], …]."""
+    fichas = []
+    for trozo in texto.split():
+        limpia = trozo.strip(SIGNOS).lower()
+        if not limpia:
+            continue
+        audio = "w_" + clave(limpia) if limpia in diccionario else "p_" + clave(limpia)
+        fichas.append([trozo, audio])
+    return fichas
+
+
+def leer_cuentos(palabras):
+    """Lee herramientas/cuentos.txt."""
+    diccionario = {w["p"] for w in palabras}
+    dibujos = {w["k"] for w in palabras} | set(DIBUJOS_EXTRA)
+    cuentos = []
+    with open(os.path.join(RAIZ, "herramientas", "cuentos.txt"), encoding="utf-8") as f:
+        for linea in f:
+            linea = linea.strip()
+            if not linea or linea.startswith("#"):
+                continue
+            texto, _, resto = [x.strip() for x in linea.partition("|")]
+            dib = resto.split()
+            for d in dib:
+                if d not in dibujos:
+                    sys.exit(f"cuentos.txt: no hay dibujo '{d}' (línea: {linea})")
+            if texto.startswith("="):
+                k = "c%d" % (len(cuentos) + 1)
+                cuentos.append({"t": texto[1:].strip(), "k": k, "d": dib[0], "paginas": []})
+            elif texto.startswith("?"):
+                c = cuentos[-1]
+                t = texto[1:].strip()
+                c["pregunta"] = {"t": t, "v": "cu_%s_p" % c["k"], "p": palabras_de(t, diccionario),
+                                 "o": dib}
+            else:
+                c = cuentos[-1]
+                n = len(c["paginas"]) + 1
+                c["paginas"].append({"t": texto, "v": "cu_%s_%d" % (c["k"], n), "d": dib,
+                                     "p": palabras_de(texto, diccionario)})
+    return cuentos
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--twemoji", required=True)
@@ -154,6 +271,11 @@ def main():
     a = ap.parse_args()
 
     palabras = leer_palabras()
+    for p in NOMBRES_FRASES:
+        if not any(w["p"] == p for w in palabras):
+            sys.exit(f"NOMBRES_FRASES: '{p}' no está en palabras.txt")
+    frases = hacer_frases()
+    cuentos = leer_cuentos(palabras)
 
     # Dibujos
     img = os.path.join(RAIZ, "img")
@@ -163,6 +285,8 @@ def main():
         if not ruta:
             sys.exit(f"No hay dibujo para '{w['p']}' ({w['e']})")
         shutil.copyfile(ruta, os.path.join(img, w["k"] + ".svg"))
+    for k, emoji in DIBUJOS_EXTRA.items():
+        shutil.copyfile(svg_de_emoji(emoji, a.twemoji), os.path.join(img, k + ".svg"))
     # Íconos de los botones (como imagen: algunas TVs no tienen fuente de emojis)
     for nombre, emoji in ICONOS.items():
         shutil.copyfile(svg_de_emoji(emoji, a.twemoji), os.path.join(img, "_" + nombre + ".svg"))
@@ -198,6 +322,14 @@ def main():
         ingles["ef_" + k] = t
     for k, t in FRASES.items():
         textos["f_" + k] = t
+    for fr in frases:
+        textos[fr["k"]] = fr["t"][0].upper() + fr["t"][1:] + ("" if fr["t"].endswith(".") else ".")
+    for c in cuentos:
+        for pag in c["paginas"] + [c["pregunta"]]:
+            textos[pag["v"]] = pag["t"]
+            for vista, audio in pag["p"]:
+                if audio.startswith("p_"):
+                    textos[audio] = vista.strip(SIGNOS).lower() + "."
 
     if a.voz:
         aud = os.path.join(RAIZ, "audio")
@@ -217,11 +349,15 @@ def main():
         "letras": {l: NOMBRES_LETRAS[l] for l in iniciales},
         "escucha": ESCUCHA_SILABAS,
         "audios": sorted(list(textos.keys()) + list(ingles.keys())),
+        "frases": frases,
+        "tipos": {p: t[2] for p, t in sorted(NOMBRES_FRASES.items())},
+        "cuentos": cuentos,
     }
     with open(os.path.join(RAIZ, "js", "datos.js"), "w", encoding="utf-8") as f:
         f.write("// Generado por herramientas/generar.py; no editar a mano.\n")
         f.write("var DATOS = " + json.dumps(datos, ensure_ascii=False) + ";\n")
-    print(f"{len(palabras)} palabras, {len(iniciales)} letras, {len(textos)} voces")
+    print(f"{len(palabras)} palabras, {len(iniciales)} letras, {len(frases)} frases, "
+          f"{len(cuentos)} cuentos, {len(textos)} voces")
 
 
 def inicial(p):
