@@ -67,6 +67,7 @@
     $('pregunta').appendChild(el('div', 'palabra-grande frase' + (f.t.length > 20 ? ' larga' : ''), txt(f.t)));
     mezclar([f.g].concat(parecidas(f, 2))).forEach(function (g) {
       var b = el('button', 'opcion escena-opcion');
+      b.esCorrecta = mismo(g, f.g);
       b.appendChild(escena(g));
       L.prepararFoco(b, function () {
         if (b.classList.contains('bien')) return;
@@ -115,9 +116,19 @@
     $('pregunta').appendChild(arriba);
 
     var sinAcentos = letras.map(sinTilde);
-    var extra = mezclar(ABC.filter(function (l) { return !contiene(sinAcentos, l); })).slice(0, r.nivel >= 3 ? 3 : 2);
+    // De relleno no van letras que suenan igual a una de la palabra (b/v, s/z/c, ll/y, g/j, k/q/c)
+    // ni la h, que no suena: así no se equivoca por algo que no puede saber de oído.
+    var SUENAN = ['bv', 'szcx', 'ly', 'gj', 'kqc', 'nñ'];
+    function suenaIgual(a) {
+      return a === 'h' || sinAcentos.some(function (l) {
+        return SUENAN.some(function (g) { return g.indexOf(a) >= 0 && g.indexOf(l) >= 0; });
+      });
+    }
+    var extra = mezclar(ABC.filter(function (l) {
+      return !contiene(sinAcentos, l) && (r.nivel >= 3 || !suenaIgual(l));
+    })).slice(0, r.nivel >= 3 ? 3 : 2);
     var fichas = mezclar(letras.concat(extra));
-    if (fichas.length > 6) $('opciones').className = 'muchas';
+    if (fichas.length >= 6) $('opciones').className = 'muchas';
     var pos = 0;
     fichas.forEach(function (l) {
       var b = el('button', 'opcion', txt(l));
@@ -134,10 +145,14 @@
           } else {
             var resto = L.focos().filter(function (x) { return x.parentNode.id === 'opciones'; });
             L.enfocar(resto[0], true);
+            L.esperarOK();
             L.hablar(nombre);
           }
         } else {
-          L.equivocado(b, null, true);
+          var sigue = L.focos().filter(function (x) {
+            return x.parentNode.id === 'opciones' && x.textContent === txt(letras[pos]);
+          })[0];
+          L.equivocado(b, null, true, sigue);
         }
       }, function () { L.hablar(nombre); });
       $('opciones').appendChild(b);
@@ -224,7 +239,9 @@
       p.d.forEach(function (k) { dibujos.appendChild(imagen(k)); });
       ponerTexto(p);
       numero.textContent = (pag + 1) + ' / ' + total;
+      // En la primera página no hay «anterior» (escondido y deshabilitado: el foco no llega ahí).
       anterior.style.visibility = pag > 0 ? 'visible' : 'hidden';
+      anterior.disabled = pag === 0;
       escuchar.style.display = '';
       siguiente.style.display = '';
       L.enfocar(siguiente, true);
@@ -237,6 +254,7 @@
       ponerTexto(C.pregunta);
       numero.textContent = '?';
       anterior.style.visibility = 'visible';
+      anterior.disabled = false;
       escuchar.style.display = 'none';
       siguiente.style.display = 'none';
       var correcta = C.pregunta.o[0];

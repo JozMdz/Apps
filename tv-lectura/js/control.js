@@ -121,7 +121,10 @@
       b.appendChild(n);
     } else if (it.grande) {
       clases.push('grande');
-      if (it.escena) {
+      if (it.svg) {
+        clases.push('figura');
+        b.innerHTML = it.svg;                 // figura de «Formas» (SVG hecho por la propia app)
+      } else if (it.escena) {
         clases.push('escena');
         it.escena.forEach(function (f) {
           var fila = document.createElement('span');
@@ -168,7 +171,7 @@
     // rehacer los botones, para no perder un toque que esté en curso.
     var firma = datos.id + '|' + lista.map(function (it) {
       return it.n + (it.texto || '') + (it.img || '') + (it.nav || '') + (it.veces || '') + (it.color || '') +
-        (it.escena ? JSON.stringify(it.escena) : '');
+        (it.escena ? JSON.stringify(it.escena) : '') + (it.svg || '');
     }).join('|');
     if (firma === ultimaFirma && botones.children.length === lista.length) {
       lista.forEach(function (it, k) { estados(botones.children[k], it); });

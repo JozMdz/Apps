@@ -49,6 +49,7 @@
 
   /* Agrega un botón de respuesta. vozBien / vozMal: lo que se dice al acertar o fallar. */
   function opcion(b, correcta, vozBien, vozMal, alEnfocar, alAcertar) {
+    b.esCorrecta = !!correcta;
     L.prepararFoco(b, function () {
       if (b.classList.contains('bien')) return;
       if (correcta) {
@@ -69,16 +70,16 @@
   /* ================= MY WORDS ================= */
   Q.vocab = function (r) {
     var x = sinRepetir(r, R.vocab, 0);
-    var leer = r.nivel === 3;   // nivel 3: lee la palabra en inglés, sin oírla
-    if (!leer) $('pregunta').appendChild(bocina([voz(x[0])]));
-    $('pregunta').appendChild(el('div', 'palabra-grande ingles', x[0]));
+    // Nivel 3: solo se oye (sin la palabra escrita), con 4 dibujos.
+    $('pregunta').appendChild(bocina([voz(x[0])]));
+    if (r.nivel < 3) $('pregunta').appendChild(el('div', 'palabra-grande ingles', x[0]));
     mezclar([x].concat(otros(R.vocab, x, r.nivel === 1 ? 2 : 3))).forEach(function (y) {
       var b = el('button', 'opcion');
       b.appendChild(imagen(y[1]));
       opcion(b, y === x, [voz(x[0]), bien()], [voz(y[0]), 'ef_mal'], r.nivel === 1 ? decir([voz(y[0])]) : null);
     });
-    r.repetir = leer ? ['f_palabras'] : [voz(x[0])];
-    r.voz = leer ? (r.n === 0 ? ['f_palabras'] : []) : (r.n === 0 ? ['f_ingles'] : []).concat(r.repetir);
+    r.repetir = [voz(x[0])];
+    r.voz = (r.n === 0 ? ['f_ingles'] : []).concat(r.repetir);
   };
 
   /* ================= HE / SHE ================= */
@@ -110,11 +111,10 @@
       $('pregunta').appendChild(dibujoGrande(l[1]));
       var caja = el('div', 'palabra-grande ingles frase-en pregunta-ingles');
       caja.appendChild(el('div', '', 'Where are you?'));
-      caja.appendChild(el('div', '', "We're at the:"));
+      caja.appendChild(el('div', '', "We're at the ___."));
       $('pregunta').appendChild(caja);
       ops.forEach(function (y) {
-        opcion(botonTexto(y[0], 'lugar'), y === l, [frase, bien()], [voz(y[0]), 'ef_mal'],
-          r.nivel === 1 ? decir([voz(y[0])]) : null);
+        opcion(botonTexto(y[0], 'lugar'), y === l, [frase, bien()], [voz(y[0]), 'ef_mal'], decir([voz(y[0])]));
       });
       r.repetir = ['i_where'];
     } else {
@@ -154,7 +154,8 @@
       // Nivel 2: dos frases; nivel 3: tres. Hay que contar y fijarse en «There's a» / «There are».
       var otrosN = mezclar([1, 2, 3, 4, 5].filter(function (k) { return k !== n; })).slice(0, r.nivel === 2 ? 1 : 2);
       mezclar([n].concat(otrosN)).forEach(function (k) {
-        opcion(botonTexto(texto(k), 'frase-opcion'), k === n, [frase, bien()], ['ef_mal']);
+        opcion(botonTexto(texto(k), 'frase-opcion'), k === n, [frase, bien()], ['ef_mal'],
+          decir(['i_there_' + k + '_' + clave(c[0])]));
       });
       $('opciones').className = 'columna';
     }
@@ -164,7 +165,11 @@
 
   /* ================= OW · EA · EE ================= */
   Q.sonidos = function (r) {
-    var lista = r.nivel === 1 ? R.sonidos.filter(function (s) { return s[1] !== 'ea'; }) : R.sonidos;
+    // ea y ee suenan igual: en los niveles 1 y 2 nunca salen juntas como opciones. En el nivel 3
+    // (¿cuál está bien escrita?) no van las palabras cuya otra forma también existe (sea/see, meat/meet…).
+    var HOMOFONAS = ['sea', 'meat', 'tea', 'beach', 'bean', 'feet'];
+    var lista = r.nivel === 1 ? R.sonidos.filter(function (s) { return s[1] !== 'ea'; })
+      : r.nivel === 3 ? R.sonidos.filter(function (s) { return !contiene(HOMOFONAS, s[0]); }) : R.sonidos;
     var s = sinRepetir(r, lista, 0);
     var palabra = s[0], d = s[1], i = palabra.indexOf(d);
     var arriba = el('div', 'escribe');
@@ -181,14 +186,16 @@
       });
       arriba.appendChild(fila);
       // Nivel 1: ow o ee (suenan distinto). Nivel 2: también ea, que suena igual que ee.
-      (r.nivel === 1 ? ['ow', 'ee'] : ['ow', 'ea', 'ee']).forEach(function (o) {
+      var ops = r.nivel === 1 ? ['ow', 'ee'] : d === 'ow' ? ['ow', azar(['ea', 'ee'])] : [d, 'ow'];
+      mezclar(ops).forEach(function (o) {
         opcion(botonTexto(txt(o), 'letras'), o === d, [voz(palabra), bien()], ['ef_mal'], null, function () {
           huecos.forEach(function (h) { h.className = 'hueco lleno'; });
         });
       });
     } else {
-      // Nivel 3: ¿cuál está bien escrita? leaf / leef, seed / sead, cow / cou
-      var mal = palabra.slice(0, i) + (d === 'ow' ? 'ou' : d === 'ea' ? 'ee' : 'ea') + palabra.slice(i + 2);
+      // Nivel 3: ¿cuál está bien escrita? leaf / leef, seed / sead, cow / cau (como lo escribiría
+      // alguien que habla español: «braan», «braun»).
+      var mal = palabra.slice(0, i) + (d === 'ow' ? 'au' : d === 'ea' ? 'ee' : 'ea') + palabra.slice(i + 2);
       mezclar([palabra, mal]).forEach(function (w) {
         opcion(botonTexto(txt(w), 'escrita'), w === palabra, [voz(palabra), bien()], ['ef_mal']);
       });
@@ -203,8 +210,8 @@
     var botes = r.nivel === 1 ? BOTES.filter(function (b) { return b[0] !== 'glass'; }) : BOTES;
     var lista = R.recicla.filter(function (x) { return botes.some(function (b) { return b[0] === x[1]; }); });
     var x = sinRepetir(r, lista, 0);
-    // Nivel 3: solo la palabra escrita en inglés (sin dibujo ni voz).
-    if (r.nivel === 3) $('pregunta').appendChild(el('div', 'palabra-grande ingles', x[0]));
+    // Nivel 3: solo se oye la cosa en inglés (sin dibujo).
+    if (r.nivel === 3) $('pregunta').appendChild(bocina([voz(x[0])]));
     else $('pregunta').appendChild(dibujoGrande(x[2]));
     botes.forEach(function (b) {
       var bt = el('button', 'opcion bote');
@@ -214,9 +221,8 @@
       bt.appendChild(el('span', 'bote-nombre', b[0].toUpperCase()));
       opcion(bt, b[0] === x[1], [voz(x[0]), 'i_es_' + x[1], bien()], [voz(b[0]), 'ef_mal'], decir([voz(b[0])]));
     });
-    r.repetir = r.nivel === 3 ? ['f_recicla'] : [voz(x[0])];
-    r.voz = (r.n === 0 ? ['f_recicla', voz('plastic'), voz('glass'), voz('metal')] : [])
-      .concat(r.nivel === 3 ? [] : [voz(x[0])]);
+    r.repetir = [voz(x[0])];
+    r.voz = (r.n === 0 ? ['f_recicla', voz('plastic'), voz('glass'), voz('metal')] : []).concat(r.repetir);
   };
 
   /* ================= MENÚ ================= */

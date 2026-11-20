@@ -10,16 +10,16 @@
 = El sapo y la luna | sapo
 Es de noche. | luna
 El sapo mira la luna. | sapo luna
-El sapo dice: ¡es una dona! | sapo dona
+El sapo dice: ¡Es un plátano! | sapo platano
 El sapo salta y salta. | sapo
 Pero no llega a la luna. | sapo luna
-Mamá sapo le da una dona de verdad. | sapo dona
-? ¿Qué quería comer el sapo? | dona pan uva
+Mamá sapo le da un plátano de verdad. | sapo platano
+? ¿Qué quería comer el sapo? | platano pan uva
 
 = La foca y la pelota | foca
 La foca tiene una pelota. | foca pelota
 La foca juega y juega. | foca pelota
-¡Upa! La pelota se va al mar. | pelota mar
+¡Ups! La pelota se va al mar. | pelota mar
 Un pulpo ve la pelota. | pulpo pelota
 El pulpo le pasa la pelota a la foca. | pulpo pelota foca
 Ahora los dos juegan. | foca pulpo
@@ -31,7 +31,7 @@ Mamá hace un pastel. | mama pastel
 El pastel tiene fresas. | pastel fresa
 El perro mira el pastel. | perro pastel
 ¡El perro se come una fresa! | perro fresa
-Todos ríen. ¡Feliz fiesta, Memo! | nino perro regalo
+Todos ríen. ¡Feliz cumpleaños, Memo! | nino perro regalo
 ? ¿Qué se comió el perro? | fresa pan taco
 
 = El ratón y el queso | raton
@@ -47,7 +47,7 @@ El gato no lo ve. ¡Uf! | gato bota
 Cae mucha lluvia. | nube gota
 El oso abre su paraguas. | oso paraguas
 La vaca abre su paraguas. | vaca paraguas
-El pato no abre nada. | pato
+El pato no tiene paraguas. | pato
 ¡Al pato le gusta la lluvia! | pato gota
 Al final sale el sol. | sol
 ? ¿A quién le gusta la lluvia? | pato oso vaca

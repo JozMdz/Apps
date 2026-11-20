@@ -38,10 +38,17 @@ var SON = (function () {
   var MAX_GUARDADOS = 120;
   var guardados = {}, orden = [], cargando = {}, fallidos = {};
 
+  var BYTES_MAX = 15 * 1024 * 1024, bytes = 0;
+  function tam(b) { return b.length * b.numberOfChannels * 4; }
   function guardar(url, buf) {
     guardados[url] = buf;
     orden.push(url);
-    while (orden.length > MAX_GUARDADOS) delete guardados[orden.shift()];
+    bytes += tam(buf);
+    while (orden.length > 1 && (bytes > BYTES_MAX || orden.length > MAX_GUARDADOS)) {
+      var viejo = orden.shift();
+      bytes -= tam(guardados[viejo]);
+      delete guardados[viejo];
+    }
   }
   /* Descarga y decodifica un audio; listo(buffer) o listo(null) si no se pudo. */
   function cargar(url, listo) {
@@ -370,6 +377,7 @@ var SON = (function () {
   }
   function programar() {
     if (!tema || !ctx) return;
+    if (!musicaPrendida) { siguienteT = ctx.currentTime + 0.1; return; }
     var corchea = 60 / tema.bpm / 2;
     // Si la TV se atrasó (pestaña dormida), retoma desde ahora en vez de amontonar notas.
     if (siguienteT < ctx.currentTime - 0.2) siguienteT = ctx.currentTime + 0.05;
@@ -404,7 +412,9 @@ var SON = (function () {
   }
   // Si la app pasa a segundo plano, silencio total; al volver, sigue.
   document.addEventListener('visibilitychange', function () {
-    if (!ctx || !ctx.suspend) return;
+    if (!ctx) return;
+    salida.gain.value = document.hidden ? 0 : 0.9;
+    if (!ctx.suspend) return;
     try { if (document.hidden) ctx.suspend(); else ctx.resume(); } catch (e) { /* nada */ }
   });
 

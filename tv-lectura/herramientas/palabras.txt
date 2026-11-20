@@ -22,7 +22,7 @@ sopa | so-pa | 🍲 | soup | c
 rosa | ro-sa | 🌹 | rose | o
 cama | ca-ma | 🛏️ | bed | o
 loro | lo-ro | 🦜 | parrot | a
-foco | fo-co | 💡 | light | o
+foco | fo-co | 💡 | light bulb | o
 bebé | be-bé | 👶 | baby | o
 nube | nu-be | ☁️ | cloud | o
 uva | u-va | 🍇 | grapes | c
@@ -78,9 +78,9 @@ oveja | o-ve-ja | 🐑 | sheep | a
 helado | he-la-do | 🍦 | ice cream | c
 camello | ca-me-llo | 🐫 | camel | a
 paleta | pa-le-ta | 🍭 | lollipop | c
-gusano | gu-sa-no | 🐛 | worm | a
+gusano | gu-sa-no | 🐛 | caterpillar | a
 cohete | co-he-te | 🚀 | rocket | o
-zapato | za-pa-to | 👟 | shoe | o
+zapato | za-pa-to | 👞 | shoe | o
 manzana | man-za-na | 🍎 | apple | c
 ballena | ba-lle-na | 🐳 | whale | a
 caballo | ca-ba-llo | 🐴 | horse | a
@@ -94,7 +94,7 @@ estrella | es-tre-lla | ⭐ | star | o
 elote | e-lo-te | 🌽 | corn | c
 sandía | san-dí-a | 🍉 | watermelon | c
 corona | co-ro-na | 👑 | crown | o
-regalo | re-ga-lo | 🎁 | gift | o
+regalo | re-ga-lo | 🎁 | present | o
 mariposa | ma-ri-po-sa | 🦋 | butterfly | a
 koala | ko-a-la | 🐨 | koala | a
 unicornio | u-ni-cor-nio | 🦄 | unicorn | a

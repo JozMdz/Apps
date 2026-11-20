@@ -27,6 +27,7 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
   position: absolute; left: 0; top: 0;
   width: 1920px; height: 1080px;
   transform-origin: 0 0;
+  background: linear-gradient(180deg, #4fc3f7 0%, #b3e5fc 70%, #81c784 70%, #66bb6a 100%);
   background: linear-gradient(180deg, var(--cielo1) 0%, var(--cielo2) 70%, var(--pasto) 70%, #66bb6a 100%);
   overflow: hidden;
 }
@@ -36,9 +37,9 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 }
 #nubes span::before { content: ""; position: absolute; background: #fff; border-radius: 50%; width: 120px; height: 120px; left: 40px; top: -60px; }
 #nubes span:nth-child(1) { top: 90px; left: -300px; }
-#nubes span:nth-child(2) { top: 240px; left: -300px; animation-delay: -25s; transform: scale(.7); }
-#nubes span:nth-child(3) { top: 40px; left: -300px; animation-delay: -45s; transform: scale(.5); }
-@keyframes nube { from { margin-left: 0; } to { margin-left: 2500px; } }
+#nubes span:nth-child(2) { top: 240px; left: -300px; animation-delay: -25s; width: 180px; height: 56px; }
+#nubes span:nth-child(3) { top: 40px; left: -300px; animation-delay: -45s; width: 130px; height: 40px; }
+@keyframes nube { from { transform: translateX(0); } to { transform: translateX(2500px); } }
 
 .pantalla { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column; align-items: center; padding: 40px 80px; }
 .pantalla.activa { display: flex; animation: entra .35s ease-out; }
@@ -48,6 +49,7 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 .foco { transition: transform .15s, box-shadow .15s; }
 .foco.enfocado {
   transform: scale(1.08);
+  box-shadow: 0 0 0 10px #ffd600, 0 18px 40px rgba(0,0,0,.35);
   box-shadow: 0 0 0 10px var(--foco), 0 18px 40px rgba(0,0,0,.35);
   z-index: 2;
 }
@@ -349,3 +351,70 @@ button { font-family: inherit; color: inherit; border: 0; cursor: pointer; outli
 .opcion.bote { width: 360px; height: 300px; flex-direction: column; border-radius: 30px 30px 70px 70px; color: #263238; }
 .bote-icono { width: 130px; height: 130px; background: url(../img/i_recycle.svg) center / contain no-repeat; }
 .bote-nombre { font-size: 58px; letter-spacing: 3px; margin-top: 10px; }
+
+/* Menús con más de 6 juegos: dos renglones */
+.menu.filas { flex-wrap: wrap; justify-content: center; width: 1640px; }
+.menu.filas > * { margin: 14px 18px; }
+.menu.filas > * + * { margin-left: 18px; }
+.menu.filas .tarjeta { height: 330px; }
+
+/* Más juegos: Formas, ¿Qué sigue?, ¿Qué número falta?, Restas, ¿Cuál se fue?, Rimas, Mayúsculas */
+.opcion.forma { width: 300px; padding: 30px; }
+.figura { display: block; width: 220px; height: 220px; }
+.forma-grande .figura { width: 100%; height: 100%; }
+.serie { display: flex; align-items: center; background: #fff; border-radius: 40px; padding: 24px 30px; box-shadow: 0 12px 0 rgba(0,0,0,.15); }
+.serie > * + * { margin-left: 18px; }
+.serie img { width: 130px; height: 130px; }
+.serie-hueco { display: flex; align-items: center; justify-content: center; width: 150px; height: 150px; border: 8px dashed #90a4ae; border-radius: 24px; font-size: 100px; font-weight: 700; color: #90a4ae; }
+.serie-hueco.lleno { border: 0; animation: salta .4s; }
+.memoria-fila img { width: 180px; height: 180px; }
+.memoria-fila .serie-hueco { width: 200px; height: 200px; }
+.recta { display: flex; font-size: 130px; font-weight: 700; }
+.recta > * + * { margin-left: 24px; }
+.resta .cosa { position: relative; display: inline-block; }
+.resta .cosa.se-va img { opacity: .45; }
+.resta .cosa.se-va::after {
+  content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 12px; margin-top: -6px;
+  background: #e53935; border-radius: 6px; transform: rotate(-35deg);
+}
+.opcion.palabra-opcion { font-size: 100px; padding: 20px 40px; }
+.opcion.letra-opcion { min-width: 260px; font-size: 180px; }
+
+/* Pista: a la segunda equivocación brilla la respuesta correcta */
+.opcion.pista { animation: pista 1s ease-in-out 3; }
+@keyframes pista { 50% { transform: scale(1.12); box-shadow: 0 0 0 14px #66bb6a, 0 0 50px 20px #fff; } }
+
+/* TVs viejas (Chromium < 57) no tienen CSS grid: primero un acomodo con flex-wrap y medidas fijas,
+ * y la rejilla solo si la TV la entiende (@supports). Sin esto, Mi mundo, la batería, la guitarra y
+ * Memoria quedaban encimados o fuera de la pantalla. */
+.tambores, .acordes, .mesa, .mundo-rejilla, .pin-teclado, .letras-teclado, .ajustes, #album-rejilla {
+  display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; justify-content: center;
+}
+.tambores { width: 1290px; }
+.tambores > .pad { margin: 20px 55px; }
+.acordes { width: 1440px; }
+.acordes > .pad { width: 440px; margin: 20px; }
+.mesa { width: 1100px; }
+.mesa > * { margin: 12px; }
+.mundo-rejilla { width: 1240px; height: 744px; justify-content: flex-start; }
+.celda { width: 124px; height: 124px; }
+.pin-teclado { width: 720px; }
+.pin-teclado > * { width: 220px; margin: 9px; }
+.letras-teclado { width: 1500px; }
+.letras-teclado > * { width: 150px; margin: 8px; }
+.letras-teclado > .ancha { width: 316px; }
+.ajustes > * { width: 820px; margin: 13px; }
+#album-rejilla > * { margin: 11px; }
+@supports (display: grid) {
+  .tambores, .acordes, .mesa, .mundo-rejilla, .pin-teclado, .letras-teclado, .ajustes, #album-rejilla { display: grid; }
+  .tambores, .acordes, .mesa, .pin-teclado, .letras-teclado, #album-rejilla { width: auto; }
+  .ajustes { width: 1700px; }
+  .tambores > .pad, .acordes > .pad, .mesa > *, .pin-teclado > *, .letras-teclado > *, .ajustes > *, #album-rejilla > * { margin: 0; }
+  .acordes > .pad, .pin-teclado > *, .letras-teclado > *, .letras-teclado > .ancha, .ajustes > * { width: auto; }
+  .celda { width: auto; height: auto; }
+}
+.menu.filas .t-icono { font-size: 72px; }
+.menu.filas .t-icono.largo { font-size: 52px; }
+.menu.filas .t-img { width: 104px; height: 104px; }
+.menu.filas .t-nombre { font-size: 38px; line-height: 1.1; text-align: center; padding: 0 10px; }
+.menu.filas .tarjeta > * + * { margin-top: 10px; }

@@ -19,6 +19,7 @@
   }
   /* Agrega un botón de respuesta. vozBien/vozMal: lo que se dice al acertar o fallar. */
   function opcion(b, correcta, vozBien, vozMal, alEnfocar, alAcertar) {
+    b.esCorrecta = !!correcta;
     L.prepararFoco(b, function () {
       if (b.classList.contains('bien')) return;
       if (correcta) {
@@ -175,7 +176,7 @@
     fila.appendChild(resultado);
     $('pregunta').appendChild(fila);
     mezclar([a + b].concat(cercanos(a + b, 2, 1, 12))).forEach(function (x) {
-      opcion(botonTexto(x), x === a + b, ['m_' + a, 'f_mas', 'm_' + b, 'm_' + (a + b), L.felicitar()], null, null,
+      opcion(botonTexto(x), x === a + b, ['m_' + a, 'f_mas', 'm_' + b, 'f_son', 'm_' + (a + b), L.felicitar()], null, null,
         function () { resultado.className = 'hueco lleno'; });
     });
     r.repetir = ['f_cuantoes', 'm_' + a, 'f_mas', 'm_' + b];
@@ -231,7 +232,7 @@
     var extra = mezclar(ABC.filter(function (l) { return !contiene(letras, l); })).slice(0, r.nivel >= 3 ? 3 : 2);
     var fichas = mezclar(letras.map(function (l, i) { return { l: l, i: i }; })
       .concat(extra.map(function (l) { return { l: l, i: 9 }; })));
-    if (fichas.length > 6) $('opciones').className = 'muchas';
+    if (fichas.length >= 6) $('opciones').className = 'muchas';
     var pos = 0;
     fichas.forEach(function (f) {
       // La mayúscula solo se muestra en la ficha de la primera letra.
@@ -250,6 +251,7 @@
           } else {
             var resto = L.focos().filter(function (x) { return x.parentNode.id === 'opciones'; });
             L.enfocar(resto[0], true);
+            L.esperarOK();
             L.hablar(nombreLetra);
           }
         } else {

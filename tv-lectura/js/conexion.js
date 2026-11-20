@@ -131,7 +131,9 @@
     } else if (cl.contains('opcion') || cl.contains('estampa')) {
       d.grande = true;
       var esc = e.querySelector('.escena');
-      if (esc) {   // «Frases»: renglones de dibujos (cuántos y cuál)
+      var fig = e.querySelector('.figura');
+      if (fig) d.svg = fig.innerHTML;          // «Formas»: la figura misma (es un SVG propio)
+      else if (esc) {   // «Frases»: renglones de dibujos (cuántos y cuál)
         d.escena = [].map.call(esc.children, function (f) {
           return [f.children.length, f.firstChild ? f.firstChild.getAttribute('src') : ''];
         });
@@ -140,7 +142,8 @@
       else if (imgs.length) d.img = imgs[0].getAttribute('src');
       else d.texto = e.textContent;
     } else {
-      d.texto = e.textContent.replace(/\s+/g, ' ').trim();
+      // innerText respeta los saltos («5 minutos»); textContent pegaría «5minutos».
+      d.texto = (e.innerText || e.textContent).replace(/\s+/g, ' ').trim();
       if (imgs.length) d.icono = imgs[0].getAttribute('src');
     }
     ESTADOS.forEach(function (c) { if (cl.contains(c)) d[c] = true; });

@@ -5,7 +5,7 @@ Dos apps Android para escuchar texto mientras se maneja, y un juego para la TV L
 | App | Para qué | Carpeta | APK |
 | --- | --- | --- | --- |
 | **Estudio en audio** | Escuchar documentos PDF o Markdown completos, con índice de apartados y memoria de dónde te quedaste. No necesita permisos especiales. | `lector/` | `lector-release.apk` |
-| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.5.0_all.ipk` |
+| **Leo y Juego** (TV LG) | App para niños de kínder: leer (desde las letras hasta cuentos), inglés, números, música y minijuegos con PIN; se juega con el control o con el celular. | `tv-lectura/` | `com.jozmdz.leoyjuego_1.6.0_all.ipk` |
 | **Seleccionar para pronunciar** | Leer en voz alta lo que hay en la pantalla de cualquier app (servicio de accesibilidad). | `app/` | `app-release.apk` |
 
 Cada push compila los dos APK en GitHub Actions (pestaña **Actions → Compilar APK → Artifacts**).
@@ -163,11 +163,11 @@ Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben
 
 | Sección | Juegos |
 | --- | --- |
-| **Leer** | **Letras** (ve la letra y busca el dibujo que empieza con ella) · **Escucha** (oye una sílaba y la busca) · **Sílabas** (completa la palabra) · **Palabras** (lee y busca el dibujo, sin ayuda de voz) · **Arma** (forma la palabra con sílabas) · **Mi nombre** (arma su nombre letra por letra; papá o mamá lo escriben la primera vez) |
+| **Leer** | **Letras** (ve la letra y busca el dibujo que empieza con ella) · **Escucha** (oye una sílaba y la busca) · **Sílabas** (completa la palabra) · **Palabras** (lee y busca el dibujo, sin ayuda de voz) · **Arma** (forma la palabra con sílabas) · **Mi nombre** (arma su nombre letra por letra; papá o mamá lo escriben la primera vez) · **Rimas** (¿cuál rima con gato?; en el nivel 3 las opciones son palabras escritas) · **Mayúsculas** (la pareja de cada letra: M con m; en el nivel 3 letras que se confunden, b/d/p/q) |
 | **Ya leo** 🦉 | Para cuando ya empieza a leer. **Frases** (lee «dos peras y un sapo» o «El oso come cuatro fresas.» y busca el dibujo; los dibujos equivocados cambian solo el número o una cosa, así que hay que leer toda la frase) · **Escribe** (ve el dibujo, oye la palabra y la escribe letra por letra) · **Cuentos** (6 cuentos cortos para leer solo: tocar una palabra la dice, *Escuchar* lee la página resaltando cada palabra, y al final hay una pregunta) |
 | **Inglés** | **Words** (oye la palabra en inglés y busca el dibujo: animales, comida, cosas) · **Colors** · **Numbers** (1 al 10). Al acertar oye la palabra en inglés y en español. |
 | **Inglés → Repaso** | Lo que ven en la escuela (kínder 3): **My words** (hospital, firefighter, teacher, fireworks, candles, lanterns…) · **He / She** (niño u hombre = *He*, niña o mujer = *She*; luego «___ is a doctor.») · **Places** (*Where are you? We're at the library / playground / beach…*) · **There's a** (*There's a candle* / *There are three lanterns*) · **ow ea ee** (completar c-**ow**, l-**ea**-f, s-**ee**-d y elegir la bien escrita: *leaf* o *leef*) · **Recycle** (¿*plastic*, *glass* o *metal*?). Si se equivoca en He/She o There's a, la voz le vuelve a explicar la regla en español. |
-| **Números** | **Cuenta** (¿cuántos hay?) · **Números** (oye el número y lo busca, hasta 20) · **Sumas** (con dibujos y luego solo números) · **Más o menos** |
+| **Números** | **Cuenta** (¿cuántos hay?) · **Números** (oye el número y lo busca, hasta 20) · **Sumas** (con dibujos y luego solo números) · **Más o menos** · **Restas** (los que se van aparecen tachados; luego solo números) · **¿Qué número falta?** (4, 5, _, 7; hasta 20, de 2 en 2 y hacia atrás) · **Formas** (círculo, cuadrado, triángulo… y en el nivel 3 ¿cuántos lados tiene?) · **¿Qué sigue?** (series AB, AAB, ABC con dibujos) · **¿Cuál se fue?** (memoria: ve 3 a 5 dibujos, uno desaparece) |
 | **Música** | **Batería** (6 tambores) · **Teclado** (do-re-mi, con la canción *Estrellita* guiada) · **Guitarra** (6 acordes). Se toca con OK, con los números 1-8 del control o desde el celular. |
 | **Juegos** 🔒 | **Salta** (el caballito brinca nopales y piedras, estilo circo) · **Atrapa** (la canasta atrapa fruta) · **Memoria** (parejas). Piden el **PIN** y cuánto tiempo (5, 10, 15 o 30 min); al acabarse el tiempo regresan solos al inicio. |
 
@@ -178,6 +178,9 @@ Los juegos de preguntas tienen rondas de 5; con 4 o más bien a la primera suben
   y 3 por cada cuento leído. En *Mi mundo* (botón con el pico, en el inicio) elige un bloque de abajo y
   con OK lo pone en un mundo de 10 × 6; si ya hay uno, lo quita y regresa a su inventario. Desde el
   celular se toca el cuadro directamente. Todo queda guardado en la TV.
+- **Si se equivoca**: a la segunda, la respuesta correcta brilla para que aprenda cuál era. Si dos
+  rondas seguidas le salen con menos de 2 estrellas, el juego baja un nivel (y sube solo otra vez
+  con 4 o más estrellas).
 - **Música de fondo** suave (alegre en los menús, tranquila mientras juega a leer) que baja sola
   cuando habla la voz, y sonidos al moverse, elegir, acertar y fallar. Se apaga en *Papás*.
 - **Para papás** (también con PIN): minúsculas o MAYÚSCULAS, voz, música de fondo, tema, nivel,
@@ -230,7 +233,7 @@ crea el instalador `.ipk` y publica la app como página web en GitHub Pages.
    la app Developer Mode.
 5. Descarga el instalador: en GitHub → **Actions** → la última ejecución verde de
    **App para TV LG** → abajo, en **Artifacts**, **leo-y-juego-ipk** (llega en un .zip; descomprímelo).
-6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.5.0_all.ipk`.
+6. Instala: `ares-install --device tv com.jozmdz.leoyjuego_1.6.0_all.ipk`.
    Aparece **Leo y Juego** en la barra de apps de la TV.
 7. El modo desarrollador dura **50 horas**: abre la app *Developer Mode* de vez en cuando y pulsa
    **Extend** (si caduca, la app se borra y hay que repetir el paso 6).
@@ -263,6 +266,11 @@ Para probarla en la computadora: `cd tv-lectura && python3 -m http.server` y abr
 
 Créditos: conexión con [PeerJS](https://peerjs.com/) (MIT), QR con [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), dibujos de [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0), letras
 [Andika](https://software.sil.org/andika/) y [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL OFL; la de pixeles solo en títulos), voces [Piper](https://github.com/rhasspy/piper) es_MX "claude" y en_US "amy". Los sonidos de los instrumentos, los efectos y la música de fondo se generan en la TV (Web Audio).
+
+**TVs LG viejas**: todo el código es ES5; las rejillas (Mi mundo, batería, guitarra, Memoria, PIN,
+álbum) tienen un acomodo de respaldo para navegadores sin CSS grid, y `js/peerjs.min.js` está
+recompilado con `esbuild --target=chrome53` porque el original usa sintaxis de 2020 y en esas TVs no
+aparecía el QR del celular.
 
 **Sobre el sonido en la TV**: las voces se reproducen con Web Audio (`js/sonido.js`), no cambiando el
 archivo de un `<audio>`, porque en la TV eso se comía el principio de cada clip y solo se oían

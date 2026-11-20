@@ -54,6 +54,7 @@
 /* Foco: marco blanco de pixeles con contorno negro */
 .tema-bloques .foco.enfocado {
   transform: scale(1.06);
+  box-shadow: 0 0 0 5px #1e1e1e, 0 0 0 15px #fff, 0 0 0 20px #1e1e1e;
   box-shadow: var(--bisel), 0 0 0 5px #1e1e1e, 0 0 0 15px #fff, 0 0 0 20px #1e1e1e, var(--sombra);
 }
 .tema-bloques .opcion.bien { box-shadow: var(--bisel), 0 0 0 5px #1e1e1e, 0 0 0 16px #43a047, 0 0 0 21px #1e1e1e; }

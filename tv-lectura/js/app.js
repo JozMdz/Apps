@@ -162,7 +162,10 @@
     if (SON) SON.efecto.mover();
     // Dice el botón solo si el foco se queda en él un momento: al pasar rápido por varios
     // botones se oían pedacitos de cada uno.
-    if (e.alEnfocar) esperaVoz = setTimeout(function () { if (enfocado === e) e.alEnfocar(); }, 280);
+    // Tampoco mientras se oye la pregunta o el «¡muy bien!» (si la cortara, la ronda se atoraba).
+    if (e.alEnfocar) esperaVoz = setTimeout(function () {
+      if (enfocado === e && !bloqueado && !preguntando) e.alEnfocar();
+    }, 280);
   }
   function centro(e) {
     var r = e.getBoundingClientRect();
@@ -193,8 +196,12 @@
     if (!SON || e.classList.contains('opcion') || e.classList.contains('pad') || e.sinSonido) return;
     SON.efecto.elegir();
   }
+  // Después de cambiar de pantalla, de pregunta o de ficha, OK espera un momento: con un doble OK
+  // rápido se contestaba sin ver la pregunta.
+  var okDesde = 0;
+  function esperarOK(ms) { okDesde = Date.now() + (ms || 450); }
   function activar(e) {
-    if (!e || bloqueado) return;
+    if (!e || bloqueado || Date.now() < okDesde) return;
     if (e.alElegir) { sonidoElegir(e); e.alElegir(); } else e.click();
   }
 
@@ -223,6 +230,7 @@
   }
   document.addEventListener('keydown', function (ev) {
     if (SON) SON.activar();   // una tecla del control permite que suene la TV
+    if (ev.repeat && ev.keyCode === 13) { ev.preventDefault(); return; }   // OK dejado presionado
     if (tecla(ev.keyCode)) ev.preventDefault();
   });
 
@@ -233,7 +241,7 @@
     e.addEventListener('click', function (ev) {
       ev.preventDefault();
       enfocar(e, true);
-      if (!bloqueado && e.alElegir) { sonidoElegir(e); e.alElegir(); }
+      if (!bloqueado && Date.now() >= okDesde && e.alElegir) { sonidoElegir(e); e.alElegir(); }
     });
     e.addEventListener('mouseover', function () { enfocar(e); });
     return e;
@@ -245,6 +253,7 @@
     callar();
     if (SON) SON.musica(MUSICA.hasOwnProperty(id) ? MUSICA[id] : 'alegre');
     bloqueado = false;
+    esperarOK();
     var nueva = $(id);
     if (pantalla) pantalla.classList.remove('activa');
     nueva.classList.add('activa');
@@ -284,6 +293,8 @@
     w.inicial = (dos === 'ch' || dos === 'll') ? null : sinAcento(w.p.charAt(0));
   });
   var SIMPLES = P.filter(function (w) { return w.simple; });
+  // Nivel 1 de Sílabas, Palabras y Arma: solo las consonantes que se ven primero en kínder.
+  var KINDER = SIMPLES.filter(function (w) { return /^[mpsltdnaeiou]+$/.test(w.p); });
   var DOS = P.filter(function (w) { return w.s.length === 2; });
   var CORTAS = P.filter(function (w) { return w.s.length <= 2; });
   var LARGAS = P.filter(function (w) { return w.s.length >= 3; });
@@ -344,6 +355,7 @@
     if (!ronda) return;
     if (ronda.n >= ronda.total) { terminarRonda(); return; }
     ronda.fallo = false;
+    ronda.errores = 0;
     bloqueado = false;
     $('pregunta').innerHTML = '';
     $('opciones').innerHTML = '';
@@ -354,8 +366,13 @@
     dibujarProgreso();
     var ops = $('opciones').querySelectorAll('.foco');
     enfocar(ops[0] || $('repetir'), true);
-    hablar(ronda.voz);
+    esperarOK();
+    preguntando = true;
+    hablar(ronda.voz, function () { preguntando = false; });
+    // Por si la voz se corta (otra voz, la app se oculta): no dejar bloqueada la voz al enfocar.
+    setTimeout(function () { preguntando = false; }, 6000);
   }
+  var preguntando = false;
 
   function repetir() {
     if (pantalla && pantalla.id === 'juego' && ronda && ronda.voz && !bloqueado) hablar(ronda.repetir || ronda.voz);
@@ -369,11 +386,28 @@
     if (!ronda.fallo) ronda.aciertos++;
     ronda.n++;
     dibujarProgreso();
-    var r = ronda;
-    hablar(voz, function () { if (ronda === r) setTimeout(siguientePregunta, 350); });
+    var r = ronda, n = r.n, hecho = false;
+    function seguir() {
+      if (hecho || ronda !== r || r.n !== n) return;
+      hecho = true;
+      setTimeout(function () { if (ronda === r && r.n === n) siguientePregunta(); }, 350);
+    }
+    hablar(voz, seguir);
+    // Respaldo: si la voz no termina (se cortó o la app se ocultó), seguir de todos modos.
+    setTimeout(seguir, 9000);
   }
-  function equivocado(boton, voz, temporal) {
+  /* buena: el botón correcto (en los juegos de armar, la ficha que sigue). Si no se da, se busca
+   * entre las opciones la que tenga esCorrecta. */
+  function equivocado(boton, voz, temporal, buena) {
     ronda.fallo = true;
+    ronda.errores = (ronda.errores || 0) + 1;
+    // A la segunda equivocación se le enseña la respuesta: el botón correcto brilla.
+    if (ronda.errores >= 2) {
+      if (!buena) buena = [].filter.call($('opciones').querySelectorAll('.opcion'), function (x) {
+        return x.esCorrecta && !x.classList.contains('bien') && !x.classList.contains('usada');
+      })[0];
+      if (buena) pista(buena);
+    }
     if (SON) SON.efecto.mal();
     boton.classList.remove('mal');
     void boton.offsetWidth;  // reinicia la animación
@@ -383,8 +417,14 @@
     hablar(voz || [animar()]);
   }
 
+  function pista(b) {
+    b.classList.remove('pista');
+    void b.offsetWidth;
+    b.classList.add('pista');
+  }
   function opcionDibujo(w, correcta, conVoz, alAcertar) {
     var b = el('button', 'opcion');
+    b.esCorrecta = w === correcta;
     b.appendChild(img(w));
     prepararFoco(b, function () {
       if (b.classList.contains('bien')) return;
@@ -450,6 +490,7 @@
       $('pregunta').appendChild(bocina);
       mezclar([correcta].concat(otras)).forEach(function (s) {
         var b = el('button', 'opcion', txt(s));
+        b.esCorrecta = s === correcta;
         prepararFoco(b, function () {
           if (b.classList.contains('bien')) return;
           if (s === correcta) {
@@ -468,12 +509,14 @@
 
     /* Sílabas: completa la palabra con la sílaba que falta. */
     silabas: function (r) {
-      var lista = r.nivel === 1 ? SIMPLES : r.nivel === 2 ? DOS : LARGAS;
+      var lista = r.nivel === 1 ? KINDER : r.nivel === 2 ? DOS : LARGAS;
       var w = nuevaPalabra(r, lista);
       var hueco = r.nivel === 1 ? 0 : Math.floor(Math.random() * w.s.length);
       var falta = w.s[hueco];
       var cuantas = r.nivel >= 3 ? 4 : 3;
       var otras = escoger(TODAS_SILABAS, cuantas - 1, function (s) {
+        // Nivel 1: solo sílabas sencillas (ma, pe…), para no descartar las raras por su forma.
+        if (r.nivel === 1 && !SILABA_SIMPLE.test(s)) return false;
         return sinAcento(s) !== sinAcento(falta) && (r.nivel < 3 || s.charAt(0) === falta.charAt(0) || s.slice(-1) === falta.slice(-1));
       });
       if (otras.length < cuantas - 1) {
@@ -491,6 +534,7 @@
       $('pregunta').appendChild(fila);
       mezclar([falta].concat(otras)).forEach(function (s) {
         var b = el('button', 'opcion', txt(s));
+        b.esCorrecta = s === falta;
         prepararFoco(b, function () {
           if (b.classList.contains('bien')) return;
           if (s === falta) {
@@ -510,7 +554,7 @@
 
     /* Palabras: lee la palabra y busca su dibujo (sin ayuda de voz). */
     palabras: function (r) {
-      var lista = r.nivel === 1 ? SIMPLES : r.nivel === 2 ? CORTAS : LARGAS;
+      var lista = r.nivel === 1 ? KINDER : r.nivel === 2 ? CORTAS : LARGAS;
       var w = nuevaPalabra(r, lista);
       var cuantas = r.nivel >= 3 ? 4 : 3;
       var otras = [];
@@ -536,7 +580,7 @@
 
     /* Arma: elige las sílabas en orden para formar la palabra del dibujo. */
     arma: function (r) {
-      var lista = r.nivel === 1 ? SIMPLES : r.nivel === 2 ? TRES : LARGAS;
+      var lista = r.nivel === 1 ? KINDER : r.nivel === 2 ? TRES : LARGAS;
       var w = nuevaPalabra(r, lista);
       var extra = escoger(TODAS_SILABAS, r.nivel >= 3 ? 2 : 1, function (s) { return !contiene(w.s, s); });
       $('pregunta').appendChild(dibujoGrande(w));
@@ -548,6 +592,7 @@
       });
       $('pregunta').appendChild(fila);
       var pos = 0;
+      if (w.s.length + extra.length >= 6) $('opciones').className = 'muchas';
       mezclar(w.s.concat(extra)).forEach(function (s) {
         var b = el('button', 'opcion', txt(s));
         prepararFoco(b, function () {
@@ -562,10 +607,14 @@
               preguntaLista(['w_' + w.k, felicitar()]);
             } else {
               enfocar(masCercano(b, resto), true);
+              esperarOK();
               hablar(['s_' + clave(s)]);
             }
           } else {
-            equivocado(b, null, true);
+            var sigue = [].filter.call($('opciones').querySelectorAll('.opcion'), function (x) {
+              return x.textContent === txt(w.s[pos]) && !x.classList.contains('usada');
+            })[0];
+            equivocado(b, null, true, sigue);
           }
         }, function () { hablar(['s_' + clave(s)]); });
         $('opciones').appendChild(b);
@@ -620,7 +669,15 @@
       }
       lluvia();
     }
-    if (r.aciertos >= 4 && nivelDe(r.juego) < NIVEL_MAX) {
+    if (!EST.flojas) EST.flojas = {};
+    EST.flojas[r.juego] = r.aciertos < 2 ? (EST.flojas[r.juego] || 0) + 1 : 0;
+    if (EST.flojas[r.juego] >= 2 && nivelDe(r.juego) > 1) {
+      // Le está costando: baja un nivel para que practique y no se frustre.
+      EST.niveles[r.juego] = nivelDe(r.juego) - 1;
+      EST.flojas[r.juego] = 0;
+      mensaje = '¡Vamos a practicar en el nivel ' + EST.niveles[r.juego] + '!';
+      voz.push('f_otra');
+    } else if (r.aciertos >= 4 && nivelDe(r.juego) < NIVEL_MAX) {
       EST.niveles[r.juego] = nivelDe(r.juego) + 1;
       mensaje = '¡Subiste al nivel ' + EST.niveles[r.juego] + '!';
       voz.push('f_nivel');
@@ -689,7 +746,8 @@
     $('menu-titulo').textContent = c.titulo ? c.titulo() : c.nombre;
     var cont = $('menu-tarjetas');
     cont.innerHTML = '';
-    cont.className = 'menu' + (c.items.length > 5 ? ' chico' : '');
+    // Más de 6 juegos: tarjetas chicas en dos renglones.
+    cont.className = 'menu' + (c.items.length > 5 ? ' chico' : '') + (c.items.length > 6 ? ' filas' : '');
     var foco = null;
     c.items.forEach(function (it) {
       var b = tarjeta(it);
@@ -821,7 +879,8 @@
     D: D, P: P, EST: EST, guardar: guardar, nivelDe: nivelDe,
     hablar: hablar, callar: callar, felicitar: felicitar, animar: animar,
     prepararFoco: prepararFoco, enfocar: enfocar, mostrar: mostrar, lluvia: lluvia,
-    PREGUNTAS: PREGUNTAS, preguntaLista: preguntaLista, equivocado: equivocado, empezar: empezar,
+    PREGUNTAS: PREGUNTAS, preguntaLista: preguntaLista, equivocado: equivocado, empezar: empezar, pista: pista,
+    esperarOK: esperarOK,
     categoria: categoria, agregarJuego: agregarJuego, abrirMenu: abrirMenu, irInicio: irInicio,
     pantallaNueva: pantallaNueva, TECLAS: TECLAS, ATRAS: ATRAS, abrirPapas: abrirPapas, MUSICA: MUSICA,
     precargar: precargar,
